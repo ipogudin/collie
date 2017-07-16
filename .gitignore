@@ -1,5 +1,3 @@
-pom.xml
-pom.xml.asc
 *.jar
 *.class
 /lib/
@@ -11,3 +9,15 @@ pom.xml.asc
 .lein-plugins/
 .lein-failures
 .nrepl-port
+.nrepl-history
+*.log
+
+#generated pom
+pom.xml
+pom.xml.asc
+
+#generated leiningen files
+project.clj
+
+#macos temporary files
+.DS_Store
