@@ -21,3 +21,7 @@ project.clj
 
 #macos temporary files
 .DS_Store
+
+#Intellij Idea files
+.idea
+*.iml

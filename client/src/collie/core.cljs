@@ -1,4 +1,5 @@
-(ns collie.core)
+(ns collie.core
+  (:require [collie.validation :as validation]))
 
 (defn init! []
-  (println "Hello, World!"))
+  (println (validation/validate)))

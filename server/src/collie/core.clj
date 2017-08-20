@@ -1,5 +1,5 @@
 (ns collie.core)
 
-(defn -main
+(defn run
   [& args]
   (println "Test"))
