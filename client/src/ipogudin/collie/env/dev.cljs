@@ -1,5 +1,5 @@
 (ns ^:figwheel-no-load collie.env.dev
-  (:require [collie.core :as core]
+  (:require [ipogudin.collie.core :as core]
             [figwheel.client :as figwheel :include-macros true]))
 
 (enable-console-print!)

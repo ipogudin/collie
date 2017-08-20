@@ -1,4 +1,4 @@
-(ns collie.validation)
+(ns ipogudin.collie.validation)
 
 (defn validate
   []

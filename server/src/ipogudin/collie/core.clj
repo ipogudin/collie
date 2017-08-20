@@ -1,4 +1,4 @@
-(ns collie.core)
+(ns ipogudin.collie.core)
 
 (defn run
   [& args]

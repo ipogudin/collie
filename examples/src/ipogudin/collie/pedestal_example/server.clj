@@ -1,4 +1,4 @@
-(ns pedestal-example.server
+(ns ipogudin.collie.pedestal-example.server
   (:require [io.pedestal.http :as server]
             [io.pedestal.http.route :as route]
             [pedestal-example.service :as service]))

@@ -89,9 +89,9 @@
          (apply merge-env! (-> common-env seq flatten-1))
          (apply merge-env! (-> dev-server-env seq flatten-1))
          (with-post-wrap fileset
-           (require 'collie.dev.server)
-           (let [run-dev (resolve 'collie.dev.server/run-dev)
-                 stop (resolve 'collie.dev.server/stop)]
+           (require 'ipogudin.collie.dev.server)
+           (let [run-dev (resolve 'ipogudin.collie.dev.server/run-dev)
+                 stop (resolve 'ipogudin.collie.dev.server/stop)]
              (if-not @server-agent
                (send
                  server-agent

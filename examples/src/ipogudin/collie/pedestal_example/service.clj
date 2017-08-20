@@ -1,4 +1,4 @@
-(ns pedestal-example.service
+(ns ipogudin.collie.pedestal-example.service
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]

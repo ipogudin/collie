@@ -1,7 +1,7 @@
-(ns collie.dev.server
+(ns ipogudin.collie.dev.server
   (:require [io.pedestal.http :as server]
             [io.pedestal.http.route :as route]
-            [collie.dev.service :as service]))
+            [ipogudin.collie.dev.service :as service]))
 
 ;; This is an adapted service map, that can be started and stopped
 ;; From the REPL you can call server/start and server/stop on this service
