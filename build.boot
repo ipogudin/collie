@@ -8,7 +8,7 @@
 (task-options!
   pom {:project     'ipogudin/collie
        :version     "0.0.1-SNAPSHOT"
-       :description "UI to manager entities and relationships"
+       :description "UI to manager entities in DB"
        :url         "https://github.com/ipogudin/collie"
        :developers  {"Ivan Pogudin" "i.a.pogudin@gmail.com"}
        :license     {"EPL" "http://www.eclipse.org/legal/epl-v10.html"}})
@@ -25,6 +25,8 @@
     :source-paths #{"client/src"}
     :resource-paths #{"client/resources"}
     :dependencies '[[org.clojure/clojurescript "1.9.671" :scope "provided"]
+                    [re-frame "0.10.1" :scope "provided"]
+                    [reagent "0.7.0" :scope "provided"]
                     [ajchemist/boot-figwheel "0.5.4-6" :scope "test"]
                     [org.clojure/tools.nrepl "0.2.13" :scope "test"]
                     [com.cemerick/piggieback "0.2.2" :scope "test"]
