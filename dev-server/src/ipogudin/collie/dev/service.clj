@@ -2,7 +2,8 @@
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
-            [ring.util.response :as ring-resp]))
+            [ring.util.response :as ring-resp]
+            [ipogudin.collie.core :refer [api]]))
 
 (defn home-page
   [request]
@@ -14,7 +15,9 @@
 (def common-interceptors [(body-params/body-params) http/html-body])
 
 ;; Tabular routes
-(def routes #{["/" :get (conj common-interceptors `home-page)]})
+(def routes #{["/" :get (conj common-interceptors `home-page)]
+              ["/api/:method" :post (conj common-interceptors `api)
+               :constraints {:method #"[0-9\-\w\.]+"}]})
 
 ;; Map-based routes
 ;(def routes `{"/" {:interceptors [(body-params/body-params) http/html-body]

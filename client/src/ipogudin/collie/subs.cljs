@@ -5,3 +5,8 @@
   :name
   (fn [db]
     (:name db)))
+
+(re-frame/reg-sub
+  :value-to-display
+  (fn [db]
+    (:value db)))
