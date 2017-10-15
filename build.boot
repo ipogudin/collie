@@ -17,16 +17,17 @@
   {
     :source-paths #{"common/src"}
     :resource-paths #{}
-    :dependencies '[[org.clojure/clojure "1.9.0-alpha17" :scope "provided"]
+    :dependencies '[[org.clojure/clojure "1.9.0-beta2" :scope "provided"]
                     [org.clojure/core.async "0.3.443"]]})
 
 (def client-env
   {
     :source-paths #{"client/src"}
     :resource-paths #{"client/resources"}
-    :dependencies '[[org.clojure/clojurescript "1.9.671" :scope "provided"]
+    :dependencies '[[org.clojure/clojurescript "1.9.946" :scope "provided"]
                     [re-frame "0.10.1" :scope "provided"]
                     [reagent "0.7.0" :scope "provided"]
+                    [day8.re-frame/http-fx "0.1.4" :scope "provided"]
                     [ajchemist/boot-figwheel "0.5.4-6" :scope "test"]
                     [org.clojure/tools.nrepl "0.2.13" :scope "test"]
                     [com.cemerick/piggieback "0.2.2" :scope "test"]
@@ -37,7 +38,7 @@
   {
     :source-paths #{"server/src"}
     :resource-paths #{}
-    :dependencies '[]})
+    :dependencies '[[ring/ring-core "1.6.1" :scope "provided"]]})
 
 (def dev-server-env
   {
@@ -89,6 +90,7 @@
          "Dev server"
          []
          (apply merge-env! (-> common-env seq flatten-1))
+         (apply merge-env! (-> server-env seq flatten-1))
          (apply merge-env! (-> dev-server-env seq flatten-1))
          (with-post-wrap fileset
            (require 'ipogudin.collie.dev.server)
