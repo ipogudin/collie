@@ -5,6 +5,9 @@
     (list)
     s))
 
+(set-env! :dependencies '[[adzerk/boot-test "1.2.0" :scope "test"]])
+(require '[adzerk.boot-test :refer :all])
+
 (task-options!
   pom {:project     'ipogudin/collie
        :version     "0.0.1-SNAPSHOT"
@@ -18,25 +21,28 @@
     :source-paths #{"common/src"}
     :resource-paths #{}
     :dependencies '[[org.clojure/clojure "1.9.0-beta2" :scope "provided"]
-                    [org.clojure/core.async "0.3.443"]]})
+                    [org.clojure/tools.reader "1.1.0" :scope "provided"]
+                    [org.clojure/core.async "0.3.443" :exclusions [org.clojure/tools.reader]]
+                    [adzerk/boot-test "1.2.0" :scope "test"]]})
 
 (def client-env
   {
     :source-paths #{"client/src"}
     :resource-paths #{"client/resources"}
     :dependencies '[[org.clojure/clojurescript "1.9.946" :scope "provided"]
-                    [re-frame "0.10.1" :scope "provided"]
-                    [reagent "0.7.0" :scope "provided"]
-                    [day8.re-frame/http-fx "0.1.4" :scope "provided"]
+                    [re-frame "0.10.1" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                    [reagent "0.7.0" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                    [day8.re-frame/http-fx "0.1.4" :scope "provided" :exclusions [org.clojure/tools.reader]]
                     [ajchemist/boot-figwheel "0.5.4-6" :scope "test"]
                     [org.clojure/tools.nrepl "0.2.13" :scope "test"]
-                    [com.cemerick/piggieback "0.2.2" :scope "test"]
-                    [figwheel-sidecar "0.5.11" :scope "test"]
+                    [com.cemerick/piggieback "0.2.2" :scope "test" :exclusions [org.clojure/tools.reader]]
+                    [figwheel-sidecar "0.5.11" :scope "test" :exclusions [org.clojure/tools.reader]]
                     [me.raynes/fs "1.4.5" :scope "test"]]})
 
 (def server-env
   {
     :source-paths #{"server/src"}
+    :test-paths #{"server/test"}
     :resource-paths #{}
     :dependencies '[[ring/ring-core "1.6.1" :scope "provided"]]})
 
@@ -44,8 +50,8 @@
   {
    :source-paths #{"dev-server/src"}
    :resource-paths #{"dev-server/resources"}
-   :dependencies '[[io.pedestal/pedestal.service "0.5.2" :scope "provided"]
-                   [io.pedestal/pedestal.jetty "0.5.2" :scope "provided"]
+   :dependencies '[[io.pedestal/pedestal.service "0.5.2" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                   [io.pedestal/pedestal.jetty "0.5.2" :scope "provided" :exclusions [org.clojure/tools.reader]]
                    [ch.qos.logback/logback-classic "1.1.8" :exclusions [org.slf4j/slf4j-api] :scope "provided"]
                    [org.slf4j/jul-to-slf4j "1.7.22" :scope "provided"]
                    [org.slf4j/jcl-over-slf4j "1.7.22" :scope "provided"]
@@ -55,8 +61,8 @@
   {
    :source-paths #{"examples/src"}
    :resource-paths #{"examples/resources"}
-   :dependencies '[[io.pedestal/pedestal.service "0.5.2" :scope "provided"]
-                   [io.pedestal/pedestal.jetty "0.5.2" :scope "provided"]
+   :dependencies '[[io.pedestal/pedestal.service "0.5.2" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                   [io.pedestal/pedestal.jetty "0.5.2" :scope "provided" :exclusions [org.clojure/tools.reader]]
                    [ch.qos.logback/logback-classic "1.1.8" :exclusions [org.slf4j/slf4j-api] :scope "provided"]
                    [org.slf4j/jul-to-slf4j "1.7.22" :scope "provided"]
                    [org.slf4j/jcl-over-slf4j "1.7.22" :scope "provided"]
@@ -145,16 +151,47 @@
     (target :no-clean true)
     (install)))
 
-(deftask gen-lein
-  "Generates a lein project definition."
+(defn prepare-test-env
+  [env]
+  (merge
+    env
+    {:source-paths
+     (clojure.set/union
+       (:source-paths env)
+       (:test-paths env))}))
+
+(deftask prepare-server-tests
+         "Prepares server environment for tests"
+         []
+         (apply
+           merge-env!
+           (-> common-env prepare-test-env seq flatten-1))
+         (apply
+           merge-env!
+           (-> server-env prepare-test-env seq flatten-1))
+         identity)
+
+(defn set-environment-for-all-modules
   []
   (apply merge-env! (-> common-env seq flatten-1))
   (apply merge-env! (-> client-env seq flatten-1))
   (apply merge-env! (-> server-env seq flatten-1))
   (apply merge-env! (-> dev-server-env seq flatten-1))
-  (apply merge-env! (-> examples-env seq flatten-1))
-  (merge-env! :dependencies '[[onetom/boot-lein-generate "0.1.3" :scope "test"]])
-  (require 'boot.lein)
-  (let [generate (resolve 'boot.lein/generate)]
+  (apply merge-env! (-> examples-env seq flatten-1)))
+
+(deftask set-full-environment
+         "Sets full environment including all submodules."
+         []
+         (set-environment-for-all-modules)
+         identity)
+
+(load-file "boot_lein.clj")
+
+(deftask gen-lein
+  "Generates a lein project definition."
+  []
+  (set-environment-for-all-modules)
+  (require 'boot-lein)
+  (let [generate (resolve 'boot-lein/generate)]
     (generate))
   identity)
