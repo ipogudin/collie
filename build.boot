@@ -20,7 +20,7 @@
   {
     :source-paths #{"common/src"}
     :resource-paths #{}
-    :dependencies '[[org.clojure/clojure "1.9.0-beta2" :scope "provided"]
+    :dependencies '[[org.clojure/clojure "1.9.0-beta3" :scope "provided"]
                     [org.clojure/tools.reader "1.1.0" :scope "provided"]
                     [org.clojure/core.async "0.3.443" :exclusions [org.clojure/tools.reader]]
                     [adzerk/boot-test "1.2.0" :scope "test"]]})
@@ -44,7 +44,9 @@
     :source-paths #{"server/src"}
     :test-paths #{"server/test"}
     :resource-paths #{}
-    :dependencies '[[ring/ring-core "1.6.1" :scope "provided"]]})
+    :dependencies '[[ring/ring-core "1.6.1" :scope "provided"]
+                    [org.clojure/java.jdbc "0.7.3" :scope "provided"]
+                    [com.h2database/h2 "1.4.196" :scope "test"]]})
 
 (def dev-server-env
   {
@@ -160,7 +162,7 @@
        (:source-paths env)
        (:test-paths env))}))
 
-(deftask prepare-server-tests
+(deftask set-environment-for-server-tests
          "Prepares server environment for tests"
          []
          (apply

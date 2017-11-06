@@ -11,4 +11,4 @@ This section describes boot commands which you can use. It contains only project
 
 ### Tests
 
-* `boot watch speak prepare-server-tests test` - To run tests for server side code.  
+* `boot watch speak set-environment-for-server-tests test` - To run tests for server side code.  
