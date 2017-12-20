@@ -84,3 +84,11 @@
     (let [car2 {:id 2 :name "Car2 (Updated)" :manufacturer 1 ::entity/type :cars}
           id (sql/upsert db schema-map car2)]
       (is (= car2 (sql/get-by-id db schema-map :cars id))))))
+
+(deftest deletion
+  (testing "Deletion of entities"
+    (let [car5 {:name "Car5" :manufacturer 2 ::entity/type :cars}
+          id (sql/upsert db schema-map car5)
+          persisted-car5 (sql/get-by-id db schema-map :cars id)]
+      (sql/delete db schema-map persisted-car5)
+      (is (nil? (sql/get-by-id db schema-map :cars id))))))

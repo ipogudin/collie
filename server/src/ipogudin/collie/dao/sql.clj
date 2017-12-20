@@ -32,5 +32,8 @@
         pk))))
 
 (defn delete
-  [db schema-map entity-kw id]
-  nil)
+  [db schema-map {entity-kw ::entity/type :as entity}]
+  (let [pk-field (schema/find-primary-key (entity-kw schema-map))
+        pk-kw (::schema/name pk-field)
+        pk (get entity pk-kw)]
+    (j/delete! db entity-kw [(str (name pk-kw) " = ? ") pk])))
