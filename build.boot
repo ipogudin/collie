@@ -20,9 +20,10 @@
   {
     :source-paths #{"common/src"}
     :resource-paths #{}
-    :dependencies '[[org.clojure/clojure "1.9.0-beta3" :scope "provided"]
-                    [org.clojure/tools.reader "1.1.0" :scope "provided"]
-                    [org.clojure/core.async "0.3.443" :exclusions [org.clojure/tools.reader]]
+    :dependencies '[[org.clojure/clojure "1.9.0" :scope "provided"]
+                    [org.clojure/tools.reader "1.1.1" :scope "provided"]
+                    [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
+                    [javax.xml.bind/jaxb-api "2.3.0" :scope "provided"]
                     [adzerk/boot-test "1.2.0" :scope "test"]]})
 
 (def client-env
@@ -30,14 +31,14 @@
     :source-paths #{"client/src"}
     :resource-paths #{"client/resources"}
     :dependencies '[[org.clojure/clojurescript "1.9.946" :scope "provided"]
-                    [re-frame "0.10.1" :scope "provided" :exclusions [org.clojure/tools.reader]]
-                    [reagent "0.7.0" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                    [re-frame "0.10.3-alpha2" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                    [reagent "0.8.0-alpha2" :scope "provided" :exclusions [org.clojure/tools.reader]]
                     [day8.re-frame/http-fx "0.1.4" :scope "provided" :exclusions [org.clojure/tools.reader]]
                     [ajchemist/boot-figwheel "0.5.4-6" :scope "test"]
                     [org.clojure/tools.nrepl "0.2.13" :scope "test"]
                     [com.cemerick/piggieback "0.2.2" :scope "test" :exclusions [org.clojure/tools.reader]]
-                    [figwheel-sidecar "0.5.11" :scope "test" :exclusions [org.clojure/tools.reader]]
-                    [me.raynes/fs "1.4.5" :scope "test"]]})
+                    [figwheel-sidecar "0.5.14" :scope "test" :exclusions [org.clojure/tools.reader]]
+                    [me.raynes/fs "1.4.6" :scope "test"]]})
 
 (def server-env
   {
@@ -52,8 +53,8 @@
   {
    :source-paths #{"dev-server/src"}
    :resource-paths #{"dev-server/resources"}
-   :dependencies '[[io.pedestal/pedestal.service "0.5.2" :scope "provided" :exclusions [org.clojure/tools.reader]]
-                   [io.pedestal/pedestal.jetty "0.5.2" :scope "provided" :exclusions [org.clojure/tools.reader]]
+   :dependencies '[[io.pedestal/pedestal.service "0.5.3" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                   [io.pedestal/pedestal.jetty "0.5.3" :scope "provided" :exclusions [org.clojure/tools.reader]]
                    [ch.qos.logback/logback-classic "1.1.8" :exclusions [org.slf4j/slf4j-api] :scope "provided"]
                    [org.slf4j/jul-to-slf4j "1.7.22" :scope "provided"]
                    [org.slf4j/jcl-over-slf4j "1.7.22" :scope "provided"]
@@ -63,8 +64,8 @@
   {
    :source-paths #{"examples/src"}
    :resource-paths #{"examples/resources"}
-   :dependencies '[[io.pedestal/pedestal.service "0.5.2" :scope "provided" :exclusions [org.clojure/tools.reader]]
-                   [io.pedestal/pedestal.jetty "0.5.2" :scope "provided" :exclusions [org.clojure/tools.reader]]
+   :dependencies '[[io.pedestal/pedestal.service "0.5.3" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                   [io.pedestal/pedestal.jetty "0.5.3" :scope "provided" :exclusions [org.clojure/tools.reader]]
                    [ch.qos.logback/logback-classic "1.1.8" :exclusions [org.slf4j/slf4j-api] :scope "provided"]
                    [org.slf4j/jul-to-slf4j "1.7.22" :scope "provided"]
                    [org.slf4j/jcl-over-slf4j "1.7.22" :scope "provided"]
