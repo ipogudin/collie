@@ -3,7 +3,8 @@
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
             [ring.util.response :as ring-resp]
-            [ipogudin.collie.core :refer [api]]))
+            [ipogudin.collie.core :refer [api-endpoint]]
+            [ipogudin.collie.edn :as collie-edn]))
 
 (defn home-page
   [request]
@@ -12,12 +13,15 @@
 ;; Defines "/" and "/about" routes with their associated :get handlers.
 ;; The interceptors defined after the verb map (e.g., {:get home-page}
 ;; apply to / and its children (/about).
-(def common-interceptors [(body-params/body-params) http/html-body])
+(def common-interceptors
+  [
+   (body-params/body-params
+     (body-params/default-parser-map :edn-options collie-edn/edn-options))
+   http/html-body])
 
 ;; Tabular routes
 (def routes #{["/" :get (conj common-interceptors `home-page)]
-              ["/api/:method" :post (conj common-interceptors `api)
-               :constraints {:method #"[0-9\-\w\.]+"}]})
+              ["/api/" :post (conj common-interceptors `api-endpoint)]})
 
 ;; Map-based routes
 ;(def routes `{"/" {:interceptors [(body-params/body-params) http/html-body]

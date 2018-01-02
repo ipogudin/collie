@@ -1,9 +1,22 @@
 (ns ipogudin.collie.core
-  (:require [ring.util.response :as ring-resp]))
+  (:require [mount.core :as mount]
+            [ring.util.response :as ring-resp]
+            [ipogudin.collie.api :as api]
+            [ipogudin.collie.dao.sql :as sql]))
 
 (defn response [body]
   (ring-resp/response body))
 
-(defn api
+(defn api-endpoint
   [request]
-  (response {:value "Hello world!"}))
+  (->
+    request
+    :edn-params
+    api/handle
+    response))
+
+(defn init []
+  (->
+    (mount/find-all-states)
+    sql/setup-dao
+    mount/start))

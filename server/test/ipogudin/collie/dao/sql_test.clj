@@ -6,13 +6,13 @@
             [ipogudin.collie.dao.sql :as sql]))
 
 (def db
-  {
-   :classname   "org.h2.Driver"
-   :subprotocol "h2:mem"
-   :subname     "test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false"
-   :user        "sa"
-   :password    ""
-   })
+    {
+     :classname   "org.h2.Driver"
+     :subprotocol "h2:mem"
+     :subname     "test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false"
+     :user        "sa"
+     :password    ""
+     })
 
 (j/db-do-commands
   db
@@ -90,5 +90,5 @@
     (let [car5 {:name "Car5" :manufacturer 2 ::entity/type :cars}
           id (sql/upsert db schema-map car5)
           persisted-car5 (sql/get-by-id db schema-map :cars id)]
-      (sql/delete db schema-map persisted-car5)
+      (sql/delete db schema-map :cars id)
       (is (nil? (sql/get-by-id db schema-map :cars id))))))

@@ -23,7 +23,7 @@
   :api-request
   (fn [db [_ body]]
     {:http-xhrio {:method          :post
-                  :uri             "/api/some-method"
+                  :uri             "/api/"
                   :params          body
                   :timeout         1000
                   :format          (ajax/edn-request-format)

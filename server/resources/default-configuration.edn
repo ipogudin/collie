@@ -1,0 +1,17 @@
+{
+ :db {
+      :classname "full.class.Name"
+      :subprotocol "subprotocol"
+      :subname "url"
+      :user "user"
+      :password "password"
+      }
+ :db-pool {
+           :min-size 1
+           :max-size 10
+           :acquire-retry-attempts 1
+           :acquire-retry-delay 500 ;milliseconds
+           :max-idle-time-excess-connections 1800 ;seconds
+           :max-idle-time 10800 ;seconds
+           }
+ }

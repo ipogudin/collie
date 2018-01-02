@@ -1,5 +1,6 @@
 (ns ipogudin.collie.dao.common
-  (:require [ipogudin.collie.schema :as schema]
+  (:require [mount.core :refer [defstate]]
+            [ipogudin.collie.schema :as schema]
             [ipogudin.collie.entity :as entity]))
 
 (defn strip [entity]
@@ -10,3 +11,13 @@
   "Dresses an entity with special technical fields."
   (if entity
     (assoc entity ::entity/type entity-kw)))
+
+(defstate init-db :start #())
+;get-by-id [db schema-map entity-type-kw id]
+(defstate get-by-id :start #())
+;upsert [db schema-map entity]
+(defstate upsert :start #())
+;[db schema-map entity-type-kw id]
+(defstate delete :start #())
+
+(defstate db :start #(init-db))

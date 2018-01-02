@@ -5,8 +5,16 @@
     (list)
     s))
 
-(set-env! :dependencies '[[adzerk/boot-test "1.2.0" :scope "test"]])
-(require '[adzerk.boot-test :refer :all])
+(set-env! :dependencies '[[adzerk/boot-test "1.2.0" :scope "test"]
+                          [adzerk/boot-cljs "2.1.4" :scope "test"]
+                          [crisptrutski/boot-cljs-test "0.3.5-SNAPSHOT"
+                           :scope "test"
+                           :exclusions [org.clojure/clojure
+                                        org.clojure/tools.reader
+                                        org.clojure/clojurescript
+                                        adzerk/boot-cljs]]])
+(require '[adzerk.boot-test :refer :all]
+         '[crisptrutski.boot-cljs-test :refer [test-cljs]])
 
 (task-options!
   pom {:project     'ipogudin/collie
@@ -19,12 +27,13 @@
 (def common-env
   {
     :source-paths #{"common/src"}
+    :test-paths #{"common/test"}
     :resource-paths #{}
     :dependencies '[[org.clojure/clojure "1.9.0" :scope "provided"]
                     [org.clojure/tools.reader "1.1.1" :scope "provided"]
                     [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
                     [javax.xml.bind/jaxb-api "2.3.0" :scope "provided"]
-                    [adzerk/boot-test "1.2.0" :scope "test"]]})
+                    [mount "0.1.11" :scope "provided"]]})
 
 (def client-env
   {
@@ -44,9 +53,10 @@
   {
     :source-paths #{"server/src"}
     :test-paths #{"server/test"}
-    :resource-paths #{}
+    :resource-paths #{"server/resources"}
     :dependencies '[[ring/ring-core "1.6.1" :scope "provided"]
                     [org.clojure/java.jdbc "0.7.3" :scope "provided"]
+                    [c3p0/c3p0 "0.9.1.2"]
                     [com.h2database/h2 "1.4.196" :scope "test"]]})
 
 (def dev-server-env
@@ -70,6 +80,21 @@
                    [org.slf4j/jul-to-slf4j "1.7.22" :scope "provided"]
                    [org.slf4j/jcl-over-slf4j "1.7.22" :scope "provided"]
                    [org.slf4j/log4j-over-slf4j "1.7.22" :scope "provided"]]})
+
+(defn set-env
+  "Sets boot environment from custom environment."
+  [env]
+  (apply merge-env! (-> env seq flatten-1)))
+
+(defn set-envs
+  "Sets boot environment from a sequence of custom environments"
+  [f & envs]
+  (let [[f envs]
+        (if (fn? f)
+          [f envs]
+          [identity (conj envs f)])]
+    (doseq [env envs]
+      (set-env (f env)))))
 
 (load-file "figwheel_utils.clj")
 
@@ -98,9 +123,7 @@
 (deftask dev-server
          "Dev server"
          []
-         (apply merge-env! (-> common-env seq flatten-1))
-         (apply merge-env! (-> server-env seq flatten-1))
-         (apply merge-env! (-> dev-server-env seq flatten-1))
+         (set-envs common-env server-env dev-server-env)
          (with-post-wrap fileset
            (require 'ipogudin.collie.dev.server)
            (let [run-dev (resolve 'ipogudin.collie.dev.server/run-dev)
@@ -115,8 +138,7 @@
 (deftask dev-client
   "Builds a client part."
   []
-  (apply merge-env! (-> common-env seq flatten-1))
-  (apply merge-env! (-> client-env seq flatten-1))
+  (set-envs common-env client-env)
   (require 'boot-figwheel)
   (require 'cemerick.piggieback)
   (let [figwheel (resolve 'boot-figwheel/figwheel)
@@ -144,9 +166,10 @@
 (deftask build-jar
   "Builds a server part artifacts."
   []
-  (apply merge-env! (-> common-env seq flatten-1))
-  (apply merge-env! (-> server-env seq flatten-1))
-  (apply merge-env! (-> client-env seq flatten-1))
+  (set-envs
+    common-env
+    server-env
+    client-env)
   (comp
     (sift :to-resource [#"(.*)\.clj"])
     (pom)
@@ -166,21 +189,29 @@
 (deftask set-environment-for-server-tests
          "Prepares server environment for tests"
          []
-         (apply
-           merge-env!
-           (-> common-env prepare-test-env seq flatten-1))
-         (apply
-           merge-env!
-           (-> server-env prepare-test-env seq flatten-1))
+         (set-envs
+           prepare-test-env
+           common-env
+           server-env)
+         identity)
+
+(deftask set-environment-for-client-tests
+         "Prepares client environment for tests"
+         []
+         (set-envs
+           prepare-test-env
+           common-env
+           client-env)
          identity)
 
 (defn set-environment-for-all-modules
   []
-  (apply merge-env! (-> common-env seq flatten-1))
-  (apply merge-env! (-> client-env seq flatten-1))
-  (apply merge-env! (-> server-env seq flatten-1))
-  (apply merge-env! (-> dev-server-env seq flatten-1))
-  (apply merge-env! (-> examples-env seq flatten-1)))
+  (set-envs
+    common-env
+    client-env
+    server-env
+    dev-server-env
+    examples-env))
 
 (deftask set-full-environment
          "Sets full environment including all submodules."

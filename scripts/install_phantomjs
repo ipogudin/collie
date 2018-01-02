@@ -1,0 +1,30 @@
+#!/bin/bash
+
+function install_on_macos {
+  DIRECTORY=`pwd`
+  mkdir /tmp/phantomjs-installation
+  cd /tmp/phantomjs-installation/
+  curl -L -o phantomjs.zip -O https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-macosx.zip
+  unzip -j phantomjs.zip
+  mv phantomjs /usr/local/bin/
+  chmod 755 /usr/local/bin/
+  cd $DIRECTORY
+  rm -rf /tmp/phantomjs-installation/
+}
+
+function install_on_linux {
+  echo -n "Linux unsupported yet"
+}
+
+OS="`uname`"
+case $OS in
+  'Linux')
+    install_on_linux
+    ;;
+  'Darwin')
+    install_on_macos
+    ;;
+  *)
+    echo "Unsuppported operating system"
+  ;;
+esac
