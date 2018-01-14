@@ -1,5 +1,6 @@
 (ns ipogudin.collie.dao.sql
-  (:require [clojure.java.jdbc :as j]
+  (:require [clojure.string :as string]
+            [clojure.java.jdbc :as j]
             [mount.core :as mount]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.entity :as entity]
@@ -33,14 +34,14 @@
   (let [{:keys [db-conf pool-conf]} configuration]
     (pool db-conf pool-conf)))
 
-(defn get-by-id
-  [db schema-map entity-type-kw id]
+(defn get-by-pk
+  [db schema-map entity-type-kw pk-value]
   (let [pk-name-kw (-> schema-map entity-type-kw schema/find-primary-key ::schema/name)]
     (->>
       (j/get-by-id
         db
         entity-type-kw
-        id
+        pk-value
         pk-name-kw)
       (dao-common/dress entity-type-kw))))
 
@@ -61,15 +62,96 @@
         pk))))
 
 (defn delete
-  [db schema-map entity-type-kw id]
+  [db schema-map entity-type-kw pk-value]
   (let [pk-name-kw (-> schema-map entity-type-kw schema/find-primary-key ::schema/name)]
-    (j/delete! db entity-type-kw [(str (name pk-name-kw) " = ? ") id])))
+    (j/delete! db entity-type-kw [(str (name pk-name-kw) " = ? ") pk-value])))
+
+(defn- db-name
+  [n]
+  (name n))
+
+(defn- limit-stmt
+  [limit]
+  (if (int? limit)
+    " limit ?"
+    ""))
+
+(defn- offset-stmt
+  [offset]
+  (if (int? offset)
+    " offset ?"
+    ""))
+
+(defn- order
+  [o]
+  (case o
+    :asc "asc"
+    :desc "desc"))
+
+(defn- order-by-stmt
+  [order-by]
+  (if (not-empty order-by)
+    (str
+      " order by "
+      (string/join
+        ", "
+        (mapv
+          (fn [[n o]]
+            (str (db-name n) " " (order o)))
+          order-by)))
+    ""))
+
+(defn- filter-stms
+  [fltr]
+  (if (not-empty fltr)
+    (str
+      " where "
+      (string/join
+        " and "
+        (mapv
+          (fn [[c _]]
+            (str (db-name c) " = ? "))
+          fltr)))
+    ""))
+
+(defn- filter-prmts
+  [fltr]
+  (if (not-empty fltr)
+    (mapv second fltr)
+    []))
+
+(defn get-entities
+  "opts  :filter [[:column1 10] [:column2 \"string\"]]
+         :order-by [[:column1 :asc] [:column2 :desc]]
+         :limit 10
+         :offset 0"
+  [db schema-map entity-type-kw & opts]
+  (let [{:keys [fltr order-by limit offset]}
+         (apply hash-map opts)
+        sql
+        (str
+          "select * from "
+          (db-name entity-type-kw)
+          (filter-stms fltr)
+          (order-by-stmt order-by)
+          (limit-stmt limit)
+          (offset-stmt offset))
+        parameters
+        (filterv
+          some?
+          (into (filter-prmts fltr) [limit offset]))]
+    (println sql)
+    (->>
+      (j/query
+        db
+        (vec (cons sql parameters))))))
 
 (defn setup-dao
   [states]
   (->
     states
     (mount/swap {#'ipogudin.collie.dao.common/init-db init-db})
-    (mount/swap {#'ipogudin.collie.dao.common/get-by-id get-by-id})
+    (mount/swap {#'ipogudin.collie.dao.common/get-by-pk get-by-pk})
     (mount/swap {#'ipogudin.collie.dao.common/upsert upsert})
-    (mount/swap {#'ipogudin.collie.dao.common/delete delete})))
+    (mount/swap {#'ipogudin.collie.dao.common/delete delete})
+    (mount/swap {#'ipogudin.collie.dao.common/get-entities get-entities})))

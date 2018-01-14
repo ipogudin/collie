@@ -4,8 +4,9 @@
 
 (def
   edn-options
-  {:readers
-   {'ipogudin.collie.protocol.Request p/map->Request}})
+  {})
+  ;{:readers
+  ; {'ipogudin.collie.protocol.Request p/map->Request}})
 
 #?(:clj
    (defn read-edn [p]

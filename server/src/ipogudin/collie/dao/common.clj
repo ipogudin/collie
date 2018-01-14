@@ -14,10 +14,12 @@
 
 (defstate init-db :start #())
 ;get-by-id [db schema-map entity-type-kw id]
-(defstate get-by-id :start #())
+(defstate get-by-pk :start #())
 ;upsert [db schema-map entity]
 (defstate upsert :start #())
 ;[db schema-map entity-type-kw id]
 (defstate delete :start #())
+;[db schema-map entity-type-kw & opts]
+(defstate get-entities :start #())
 
 (defstate db :start #(init-db))

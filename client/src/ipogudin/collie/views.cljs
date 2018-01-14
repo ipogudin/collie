@@ -5,7 +5,7 @@
 (defn button []
   [:input {:type "button" :value "click" :on-click #(do
                                                       (re-frame/dispatch [:clear-value])
-                                                      (re-frame/dispatch [:api-request (p/->Request "348r2d7h31478f" [])]))}])
+                                                      (re-frame/dispatch [:api-request (p/request)]))}])
 
 (defn display []
   (let [value (re-frame/subscribe [:value-to-display])]

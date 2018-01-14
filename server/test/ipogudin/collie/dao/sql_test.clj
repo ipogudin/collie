@@ -66,29 +66,67 @@
                    ::schema/field-type ::schema/one-to-one}]}
    ])
 
-(def schema-map (schema/create-schema entities))
+(def schema-map (schema/schema-seq-to-map entities))
 
-(deftest reading
+(deftest getting-by-id
   (testing "Getting by id"
-    (let [e (sql/get-by-id db schema-map :cars 1)]
-      (is (not-empty e))
-      (is (= :cars (::entity/type e)))
-      (is (nil? (sql/get-by-id db schema-map :cars (Integer/MAX_VALUE)))))))
+    (let [car (sql/get-by-pk db schema-map :cars 1)]
+      (is (not-empty car))
+      (is (= :cars (::entity/type car)))
+      (is (= "Car1" (:name car)))
+      (is (nil? (sql/get-by-pk db schema-map :cars (Integer/MAX_VALUE)))))))
 
-(deftest writing
+(deftest upserting
   (testing "Insertion of new entities"
     (let [car4 {:name "Car4" :manufacturer 2 ::entity/type :cars}
-          id (sql/upsert db schema-map car4)]
-      (is (= (merge {:id id} car4) (sql/get-by-id db schema-map :cars id)))))
+          pk-value (sql/upsert db schema-map car4)]
+      (is (= (merge {:id pk-value} car4) (sql/get-by-pk db schema-map :cars pk-value))))))
   (testing "Update of existing entities"
-    (let [car2 {:id 2 :name "Car2 (Updated)" :manufacturer 1 ::entity/type :cars}
-          id (sql/upsert db schema-map car2)]
-      (is (= car2 (sql/get-by-id db schema-map :cars id))))))
+    (let [car5 {:name "Car5" :manufacturer 2 ::entity/type :cars}
+          id (sql/upsert db schema-map car5)
+          car5-updated {:id id :name "Car5" :manufacturer 2 ::entity/type :cars}]
+      (is (= car5-updated (sql/get-by-pk db schema-map :cars id)))))
 
 (deftest deletion
   (testing "Deletion of entities"
     (let [car5 {:name "Car5" :manufacturer 2 ::entity/type :cars}
-          id (sql/upsert db schema-map car5)
-          persisted-car5 (sql/get-by-id db schema-map :cars id)]
-      (sql/delete db schema-map :cars id)
-      (is (nil? (sql/get-by-id db schema-map :cars id))))))
+          pk-value (sql/upsert db schema-map car5)
+          persisted-car5 (sql/get-by-pk db schema-map :cars pk-value)]
+      (sql/delete db schema-map :cars pk-value)
+      (is (nil? (sql/get-by-pk db schema-map :cars pk-value))))))
+
+(deftest getting-entities
+  (testing "Getting entities with default options"
+    (let [cars-vec1 (sql/get-entities db schema-map :cars)]
+      (is (not (empty? cars-vec1)))))
+  (testing "Getting entities with order-by limit and offset options"
+    (let [[c1 c2 c3 & others :as cars-vec2]
+          (sql/get-entities
+            db
+            schema-map
+            :cars
+            :order-by [[:id :asc]]
+            :limit 3
+            :offset 0)]
+      (is (empty? others))
+      (is (= ["Car1" "Car2" "Car3"] (mapv :name cars-vec2))))
+    (let [[m1 m2 & others :as manufacturers-vec1]
+          (sql/get-entities
+            db
+            schema-map
+            :manufacturers
+            :order-by [[:name :desc] [:id :asc]]
+            :limit 2)]
+      (is (empty? others))
+      (is (= ["Factory3" "Factory2"] (mapv :name manufacturers-vec1)))))
+  (testing "Getting entities with filter limit and offset options"
+    (let [[c1 & others]
+          (sql/get-entities
+            db
+            schema-map
+            :cars
+            :filter [[:name "Car1"]]
+            :limit 1
+            :offset 0)]
+      (is (empty? others))
+      (is (= "Car1" (:name c1))))))

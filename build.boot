@@ -30,8 +30,10 @@
     :test-paths #{"common/test"}
     :resource-paths #{}
     :dependencies '[[org.clojure/clojure "1.9.0" :scope "provided"]
+                    [org.clojure/test.check "0.10.0-alpha2" :scope "test"]
                     [org.clojure/tools.reader "1.1.1" :scope "provided"]
                     [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
+                    [com.rpl/specter "1.1.0" :scope "provided"]
                     [javax.xml.bind/jaxb-api "2.3.0" :scope "provided"]
                     [mount "0.1.11" :scope "provided"]]})
 
@@ -47,7 +49,8 @@
                     [org.clojure/tools.nrepl "0.2.13" :scope "test"]
                     [com.cemerick/piggieback "0.2.2" :scope "test" :exclusions [org.clojure/tools.reader]]
                     [figwheel-sidecar "0.5.14" :scope "test" :exclusions [org.clojure/tools.reader]]
-                    [me.raynes/fs "1.4.6" :scope "test"]]})
+                    [me.raynes/fs "1.4.6" :scope "test"]
+                    [doo "0.1.8" :scope "test"]]})
 
 (def server-env
   {
@@ -202,6 +205,8 @@
            prepare-test-env
            common-env
            client-env)
+         ;(task-options!
+         ;  test-cljs {:cljs-opts {:verbose true}})
          identity)
 
 (defn set-environment-for-all-modules
