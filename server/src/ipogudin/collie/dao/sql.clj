@@ -31,8 +31,8 @@
 
 (defn init-db
   []
-  (let [{:keys [db-conf pool-conf]} configuration]
-    (pool db-conf pool-conf)))
+  (let [{:keys [db db-pool]} configuration]
+    (pool db db-pool)))
 
 (defn get-by-pk
   [db schema-map entity-type-kw pk-value]
@@ -64,7 +64,9 @@
 (defn delete
   [db schema-map entity-type-kw pk-value]
   (let [pk-name-kw (-> schema-map entity-type-kw schema/find-primary-key ::schema/name)]
-    (j/delete! db entity-type-kw [(str (name pk-name-kw) " = ? ") pk-value])))
+    (->
+      (j/delete! db entity-type-kw [(str (name pk-name-kw) " = ? ") pk-value])
+      first)))
 
 (defn- db-name
   [n]
@@ -140,7 +142,6 @@
         (filterv
           some?
           (into (filter-prmts fltr) [limit offset]))]
-    (println sql)
     (->>
       (j/query
         db

@@ -35,7 +35,10 @@
   (common/deep-merge
     (command ::get-entities)
     {::entity/type type}
-    (if (empty? opts) {} (apply hash-map opts))))
+    (if
+      (empty? opts)
+      {}
+      {::options (apply hash-map opts)})))
 
 (defn request
   ([] (request []))
@@ -84,6 +87,11 @@
 (s/def ::limit (s/and int? #(>= % 0)))
 (s/def ::offset (s/and int? #(>= % 0)))
 
+(s/def ::options (s/keys :opt [::order-by
+                               ::filter
+                               ::limit
+                               ::offset]))
+
 (defmulti command-mm ::code)
 (defmethod command-mm ::get-by-pk [_]
   (s/merge ::command-common-fields (s/keys :req [::entity/type ::pk-value])))
@@ -94,10 +102,7 @@
 (defmethod command-mm ::get-entities [_]
   (s/merge ::command-common-fields
            (s/keys :req [::entity/type]
-                   :opt [::order-by
-                         ::filter
-                         ::limit
-                         ::offset])))
+                   :opt [::options])))
 
 (s/def ::command (s/multi-spec command-mm ::code))
 

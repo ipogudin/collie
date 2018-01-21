@@ -91,15 +91,18 @@
   (testing "Deletion of entities"
     (let [car5 {:name "Car5" :manufacturer 2 ::entity/type :cars}
           pk-value (sql/upsert db schema-map car5)
-          persisted-car5 (sql/get-by-pk db schema-map :cars pk-value)]
-      (sql/delete db schema-map :cars pk-value)
-      (is (nil? (sql/get-by-pk db schema-map :cars pk-value))))))
+          persisted-car5 (sql/get-by-pk db schema-map :cars pk-value)
+          result1 (sql/delete db schema-map :cars pk-value)
+          result2 (sql/delete db schema-map :cars Integer/MAX_VALUE)]
+      (is (= 1 result1))
+      (is (nil? (sql/get-by-pk db schema-map :cars pk-value)))
+      (is (= 0 result2)))))
 
 (deftest getting-entities
   (testing "Getting entities with default options"
     (let [cars-vec1 (sql/get-entities db schema-map :cars)]
       (is (not (empty? cars-vec1)))))
-  (testing "Getting entities with order-by limit and offset options"
+  (testing "Getting entities with order-by, limit and offset options"
     (let [[c1 c2 c3 & others :as cars-vec2]
           (sql/get-entities
             db
@@ -119,7 +122,7 @@
             :limit 2)]
       (is (empty? others))
       (is (= ["Factory3" "Factory2"] (mapv :name manufacturers-vec1)))))
-  (testing "Getting entities with filter limit and offset options"
+  (testing "Getting entities with filter, limit and offset options"
     (let [[c1 & others]
           (sql/get-entities
             db

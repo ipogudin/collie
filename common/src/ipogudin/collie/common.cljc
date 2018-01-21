@@ -1,5 +1,7 @@
-(ns ipogudin.collie.common)
+(ns ipogudin.collie.common
+  (:require [com.rpl.specter :refer [recursive-path cond-path ALL STAY]]))
 
+; utils for working with data structures
 (defn deep-merge
   ([a b]
     (merge-with (fn [x y]
@@ -14,3 +16,24 @@
      (if (nil? c)
        ab
        (apply deep-merge (into [ab c] t))))))
+
+(defn remove-ns-from-keyword
+  "Removes namespace from a keyword.
+  If it is not a keyword returns an unmodified value."
+  [v]
+  (if
+    (keyword? v)
+    (keyword (name v))
+    v))
+
+; specter paths/navigators
+
+(def ALL-OBJECTS
+  "A recursive path to traverse whole objects in nested data structure
+  (including keys and values from maps)."
+  (recursive-path [] p
+                  (cond-path
+                    seq? [ALL p]
+                    vector? [ALL p]
+                    map? [ALL p]
+                    some? STAY)))
