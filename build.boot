@@ -73,17 +73,6 @@
                    [org.slf4j/jcl-over-slf4j "1.7.22" :scope "provided"]
                    [org.slf4j/log4j-over-slf4j "1.7.22" :scope "provided"]]})
 
-(def examples-env
-  {
-   :source-paths #{"examples/src"}
-   :resource-paths #{"examples/resources"}
-   :dependencies '[[io.pedestal/pedestal.service "0.5.3" :scope "provided" :exclusions [org.clojure/tools.reader]]
-                   [io.pedestal/pedestal.jetty "0.5.3" :scope "provided" :exclusions [org.clojure/tools.reader]]
-                   [ch.qos.logback/logback-classic "1.1.8" :exclusions [org.slf4j/slf4j-api] :scope "provided"]
-                   [org.slf4j/jul-to-slf4j "1.7.22" :scope "provided"]
-                   [org.slf4j/jcl-over-slf4j "1.7.22" :scope "provided"]
-                   [org.slf4j/log4j-over-slf4j "1.7.22" :scope "provided"]]})
-
 (defn set-env
   "Sets boot environment from custom environment."
   [env]
@@ -215,8 +204,7 @@
     common-env
     client-env
     server-env
-    dev-server-env
-    examples-env))
+    dev-server-env))
 
 (deftask set-full-environment
          "Sets full environment including all submodules."
