@@ -1,10 +1,10 @@
-(ns ipogudin.collie.configuration
+(ns ipogudin.collie.server.configuration
   (:require [mount.core :refer [defstate]]
             [ipogudin.collie.edn :refer [read-edn]]
             [ipogudin.collie.common :refer [deep-merge]]))
 
 (defstate default-configuration-path :start "default-configuration.edn")
-(defstate configuration-path :start (System/getProperty "configuration"))
+(defstate configuration-path :start "configuration.edn")
 
 (defn load-configuration-by-path [path]
   (read-edn path))

@@ -1,14 +1,14 @@
-(ns ipogudin.collie.api-test
+(ns ipogudin.collie.server.api-test
   (:require [clojure.test :refer :all]
             [mount.core :as mount]
             [clojure.java.jdbc :as j]
             [ipogudin.collie.entity :as entity]
-            [ipogudin.collie.dao.common :as common-dao]
-            [ipogudin.collie.configuration :as configuration]
+            [ipogudin.collie.server.dao.common :as common-dao]
+            [ipogudin.collie.server.configuration :as configuration]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.protocol :as protocol]
-            [ipogudin.collie.dao.sql :as sql-dao]
-            [ipogudin.collie.api :as api]))
+            [ipogudin.collie.server.dao.sql :as sql-dao]
+            [ipogudin.collie.server.api :as api]))
 
 (def entities
   [
@@ -87,16 +87,16 @@
 (defn fixture
   [f]
   (->
-    (mount/only #{#'ipogudin.collie.configuration/configuration
-                  #'ipogudin.collie.api/schema
-                  #'ipogudin.collie.dao.common/db
-                  #'ipogudin.collie.dao.common/init-db
-                  #'ipogudin.collie.dao.common/get-by-pk
-                  #'ipogudin.collie.dao.common/upsert
-                  #'ipogudin.collie.dao.common/delete
-                  #'ipogudin.collie.dao.common/get-entities})
-    (mount/swap {#'ipogudin.collie.api/schema schema-map
-                 #'ipogudin.collie.configuration/configuration conf})
+    (mount/only #{#'ipogudin.collie.server.configuration/configuration
+                  #'ipogudin.collie.schema/schema
+                  #'ipogudin.collie.server.dao.common/db
+                  #'ipogudin.collie.server.dao.common/init-db
+                  #'ipogudin.collie.server.dao.common/get-by-pk
+                  #'ipogudin.collie.server.dao.common/upsert
+                  #'ipogudin.collie.server.dao.common/delete
+                  #'ipogudin.collie.server.dao.common/get-entities})
+    (mount/swap {#'ipogudin.collie.schema/schema schema-map
+                 #'ipogudin.collie.server.configuration/configuration conf})
     sql-dao/setup-dao
     mount/start)
   (try

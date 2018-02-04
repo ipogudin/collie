@@ -1,11 +1,11 @@
-(ns ipogudin.collie.dao.sql
+(ns ipogudin.collie.server.dao.sql
   (:require [clojure.string :as string]
             [clojure.java.jdbc :as j]
             [mount.core :as mount]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.entity :as entity]
-            [ipogudin.collie.dao.common :as dao-common]
-            [ipogudin.collie.configuration :refer [configuration]])
+            [ipogudin.collie.server.dao.common :as dao-common]
+            [ipogudin.collie.server.configuration :refer [configuration]])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
 (defn pool
@@ -145,14 +145,15 @@
     (->>
       (j/query
         db
-        (vec (cons sql parameters))))))
+        (vec (cons sql parameters)))
+      vec)))
 
 (defn setup-dao
   [states]
   (->
     states
-    (mount/swap {#'ipogudin.collie.dao.common/init-db init-db})
-    (mount/swap {#'ipogudin.collie.dao.common/get-by-pk get-by-pk})
-    (mount/swap {#'ipogudin.collie.dao.common/upsert upsert})
-    (mount/swap {#'ipogudin.collie.dao.common/delete delete})
-    (mount/swap {#'ipogudin.collie.dao.common/get-entities get-entities})))
+    (mount/swap {#'ipogudin.collie.server.dao.common/init-db init-db})
+    (mount/swap {#'ipogudin.collie.server.dao.common/get-by-pk get-by-pk})
+    (mount/swap {#'ipogudin.collie.server.dao.common/upsert upsert})
+    (mount/swap {#'ipogudin.collie.server.dao.common/delete delete})
+    (mount/swap {#'ipogudin.collie.server.dao.common/get-entities get-entities})))

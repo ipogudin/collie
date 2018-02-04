@@ -2,7 +2,7 @@
  :db {
       :classname "org.h2.Driver"
       :subprotocol "h2:mem"
-      :subname "test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false"
+      :subname "dev-db;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false"
       :user "sa"
       :password ""
       }

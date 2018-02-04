@@ -12,9 +12,11 @@
                            :exclusions [org.clojure/clojure
                                         org.clojure/tools.reader
                                         org.clojure/clojurescript
-                                        adzerk/boot-cljs]]])
+                                        adzerk/boot-cljs]]
+                          [deraen/boot-sass "0.3.1" :scope "provided"]])
 (require '[adzerk.boot-test :refer :all]
-         '[crisptrutski.boot-cljs-test :refer [test-cljs]])
+         '[crisptrutski.boot-cljs-test :refer [test-cljs]]
+         '[deraen.boot-sass :refer [sass]])
 
 (task-options!
   pom {:project     'ipogudin/collie
@@ -45,6 +47,9 @@
                     [re-frame "0.10.3-alpha2" :scope "provided" :exclusions [org.clojure/tools.reader]]
                     [reagent "0.8.0-alpha2" :scope "provided" :exclusions [org.clojure/tools.reader]]
                     [day8.re-frame/http-fx "0.1.4" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                    [org.webjars.bower/bootstrap "4.0.0" :scope "provided"]
+                    [org.webjars.bower/jquery "3.3.1" :scope "provided"]
+                    [org.webjars.bower/popper.js "1.12.9" :scope "provided"]
                     [ajchemist/boot-figwheel "0.5.4-6" :scope "test"]
                     [org.clojure/tools.nrepl "0.2.13" :scope "test"]
                     [com.cemerick/piggieback "0.2.2" :scope "test" :exclusions [org.clojure/tools.reader]]
@@ -60,6 +65,7 @@
     :dependencies '[[ring/ring-core "1.6.1" :scope "provided"]
                     [org.clojure/java.jdbc "0.7.3" :scope "provided"]
                     [c3p0/c3p0 "0.9.1.2"]
+                    [org.clojure/tools.logging "0.4.0"]
                     [com.h2database/h2 "1.4.196" :scope "test"]]})
 
 (def dev-server-env
@@ -95,10 +101,10 @@
   [{:id "collie"
     :source-paths (-> (apply
                         concat
-                        (map :source-paths [client-env common-env]))
+                        (map :source-paths [client-env common-env dev-server-env]))
                       set
                       vec)
-    :compiler {:main 'collie.env.dev
+    :compiler {:main 'ipogudin.collie.client.dev.core
                :pretty-print  true
                :output-to "js/collie.js"
                :output-dir "collie.out"
@@ -117,9 +123,9 @@
          []
          (set-envs common-env server-env dev-server-env)
          (with-post-wrap fileset
-           (require 'ipogudin.collie.dev.server)
-           (let [run-dev (resolve 'ipogudin.collie.dev.server/run-dev)
-                 stop (resolve 'ipogudin.collie.dev.server/stop)]
+           (require 'ipogudin.collie.server.dev.core)
+           (let [run-dev (resolve 'ipogudin.collie.server.dev.core/run-dev)
+                 stop (resolve 'ipogudin.collie.server.dev.core/stop)]
              (if-not @server-agent
                (send
                  server-agent
@@ -145,6 +151,14 @@
                                      :validate-config true
                                      :css-dirs [(format "%s/css/" target-path)]}))
       (repl :server true)
+      (sass :output-style :nested)
+      (sift :add-jar {'org.webjars.bower/bootstrap #".*"}
+            :move {#"META-INF/resources/webjars/bootstrap/4.0.0/dist/" "public/dep/bootstrap/"})
+      (sift :add-jar {'org.webjars.bower/jquery #".*"}
+            :move {#"META-INF/resources/webjars/jquery/3.3.1/dist/" "public/dep/jquery/"})
+      (sift :add-jar {'org.webjars.bower/popper.js #".*"}
+            :move {#"META-INF/resources/webjars/popper.js/1.12.9/dist/" "public/dep/popper/"})
+      (sift :include [#"^META-INF.*"] :invert true)
       (watch)
       (target :no-clean true))))
 

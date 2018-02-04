@@ -1,9 +1,9 @@
-(ns ^:figwheel-no-load collie.env.dev
-  (:require [ipogudin.collie.core :as core]
+(ns ^:figwheel-no-load ipogudin.collie.client.dev.core
+  (:require [ipogudin.collie.client.dev.app :as app]
             [figwheel.client :as figwheel :include-macros true]))
 
 (enable-console-print!)
 
 (figwheel/watch-and-reload
   :websocket-url "ws://localhost:3449/figwheel-ws"
-  :jsload-callback core/init)
+  :jsload-callback app/init)

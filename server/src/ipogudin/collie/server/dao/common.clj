@@ -1,8 +1,8 @@
-(ns ipogudin.collie.dao.common
+(ns ipogudin.collie.server.dao.common
   (:require [mount.core :refer [defstate]]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.entity :as entity]
-            [ipogudin.collie.configuration :refer [configuration]]))
+            [ipogudin.collie.server.configuration :refer [configuration]]))
 
 (defn strip [entity]
   "Strips an entity as a preparation process for dao layer. In other words, it removes technical fields."

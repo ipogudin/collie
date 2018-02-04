@@ -1,15 +1,15 @@
-(ns ipogudin.collie.core
+(ns ipogudin.collie.client.core
   (:require
     [reagent.core :as reagent]
     [re-frame.core :as re-frame]
-    [ipogudin.collie.events]
-    [ipogudin.collie.subs]
-    [ipogudin.collie.views :as views]
+    [ipogudin.collie.client.events]
+    [ipogudin.collie.client.subs]
+    [ipogudin.collie.client.views :as views]
     [ipogudin.collie.validation :as validation]))
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (reagent/render [views/main-panel]
+  (reagent/render [views/app]
                   (.getElementById js/document "collie-app")))
 
 (defn ^:export init []

@@ -1,4 +1,4 @@
-(ns ipogudin.collie.db)
+(ns ipogudin.collie.client.db)
 
 (def default-db
   {:name "collie"})

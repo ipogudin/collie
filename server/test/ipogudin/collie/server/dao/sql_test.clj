@@ -1,9 +1,9 @@
-(ns ipogudin.collie.dao.sql-test
+(ns ipogudin.collie.server.dao.sql-test
   (:require [clojure.test :refer :all]
             [clojure.java.jdbc :as j]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.entity :as entity]
-            [ipogudin.collie.dao.sql :as sql]))
+            [ipogudin.collie.server.dao.sql :as sql]))
 
 (def db
     {

@@ -1,8 +1,9 @@
-(ns ipogudin.collie.core
+(ns ipogudin.collie.server.core
   (:require [mount.core :as mount]
             [ring.util.response :as ring-resp]
-            [ipogudin.collie.api :as api]
-            [ipogudin.collie.dao.sql :as sql]))
+            [ipogudin.collie.server.api :as api]
+            [ipogudin.collie.server.dao.sql :as sql]
+            [ipogudin.collie.schema]))
 
 (defn response [body]
   (ring-resp/response body))
@@ -15,8 +16,9 @@
     api/handle
     response))
 
-(defn init []
+(defn init [schema]
   (->
     (mount/find-all-states)
+    (mount/swap {#'ipogudin.collie.schema/schema schema})
     sql/setup-dao
     mount/start))

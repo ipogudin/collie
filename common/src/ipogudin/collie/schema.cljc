@@ -3,6 +3,7 @@
                 :cljs cljs.spec.alpha) :as s]
             [#?(:clj clojure.spec.gen.alpha
                 :cljs cljs.spec.gen.alpha) :as gen]
+            [mount.core :refer [defstate]]
             [ipogudin.collie.entity :as entity]))
 
 (s/def ::name entity/db-name-spec)
@@ -72,3 +73,6 @@
 (s/fdef find-primary-key
         :args (s/cat :entity ::entity)
         :ret (s/or :found ::field :not-found nil?))
+
+; mount states
+(defstate schema :start #())

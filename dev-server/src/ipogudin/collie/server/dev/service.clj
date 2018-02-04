@@ -1,9 +1,9 @@
-(ns ipogudin.collie.dev.service
+(ns ipogudin.collie.server.dev.service
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
             [ring.util.response :as ring-resp]
-            [ipogudin.collie.core :refer [api-endpoint]]
+            [ipogudin.collie.server.core :refer [api-endpoint]]
             [ipogudin.collie.edn :as collie-edn]))
 
 (defn home-page
