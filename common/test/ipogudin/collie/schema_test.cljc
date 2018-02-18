@@ -20,15 +20,24 @@
                    {::schema/name :name
                     ::schema/field-type ::schema/string}]}
    {::schema/name :cars
+    ::schema/ui {
+                 ::schema/title "Cars"
+                 }
     ::schema/fields
                   [
                    {::schema/name :id
                     ::schema/field-type ::schema/serial
                     ::schema/primary-key true}
                    {::schema/name :name
-                    ::schema/field-type ::schema/string}
+                    ::schema/field-type ::schema/string
+                    ::schema/ui {
+                                 ::schema/title "Name"
+                                 }}
                    {::schema/name :manufacturer
-                    ::schema/field-type ::schema/one-to-one}]}
+                    ::schema/field-type ::schema/one-to-one
+                    ::schema/ui {
+                                 ::schema/title "Manufacturer"
+                                 }}]}
    ])
 
 (deftest schema-converters
@@ -43,13 +52,14 @@
       (is (= (->> cars ::schema/fields count) 3)))))
 
 (deftest finding-primary-key
-  (testing "a primary key should be found in an entity"
-    (let [entity (first schema-vec)
-          primary-key (schema/find-primary-key entity)]
-      (is (some? primary-key))
-      (is (= (::schema/name primary-key) :id))))
-  (testing "finding a primary key (automatic tests)"
-    (is (successful? (stest/check `schema/find-primary-key {::stc/opts {:num-tests 10}})))))
+  (testing "Finding primary key"
+    (testing "a primary key should be found in an entity"
+      (let [entity (first schema-vec)
+            primary-key (schema/find-primary-key entity)]
+        (is (some? primary-key))
+        (is (= (::schema/name primary-key) :id))))
+    (testing "finding a primary key (automatic tests)"
+      (is (successful? (stest/check `schema/find-primary-key {::stc/opts {:num-tests 10}}))))))
 
 (deftest field-spec
   (testing "common metadata"))

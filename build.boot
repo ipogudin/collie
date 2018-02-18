@@ -151,7 +151,6 @@
                                      :validate-config true
                                      :css-dirs [(format "%s/css/" target-path)]}))
       (repl :server true)
-      (sass :output-style :nested)
       (sift :add-jar {'org.webjars.bower/bootstrap #".*"}
             :move {#"META-INF/resources/webjars/bootstrap/4.0.0/dist/" "public/dep/bootstrap/"})
       (sift :add-jar {'org.webjars.bower/jquery #".*"}
@@ -160,6 +159,7 @@
             :move {#"META-INF/resources/webjars/popper.js/1.12.9/dist/" "public/dep/popper/"})
       (sift :include [#"^META-INF.*"] :invert true)
       (watch)
+      (sass :output-style :nested)
       (target :no-clean true))))
 
 (deftask dev

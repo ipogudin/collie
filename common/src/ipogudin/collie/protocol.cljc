@@ -86,11 +86,13 @@
 
 (s/def ::limit (s/and int? #(>= % 0)))
 (s/def ::offset (s/and int? #(>= % 0)))
+(s/def ::resolved-dependencies boolean?)
 
 (s/def ::options (s/keys :opt [::order-by
                                ::filter
                                ::limit
-                               ::offset]))
+                               ::offset
+                               ::resolved-dependencies]))
 
 (defmulti command-mm ::code)
 (defmethod command-mm ::get-by-pk [_]

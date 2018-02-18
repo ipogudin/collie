@@ -17,6 +17,6 @@
     (:value db)))
 
 (re-frame/reg-sub
-  :opened-entities
+  :selected
   (fn [db]
-    (:opened-entities db)))
+    (:selected db)))

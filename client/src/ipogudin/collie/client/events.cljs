@@ -7,6 +7,12 @@
             [ipogudin.collie.schema :refer [schema]]
             [ipogudin.collie.protocol :as p]))
 
+(defn extract-1st-result
+  [db db-path {status ::p/status [{result ::p/result}] ::p/results}]
+  (if (= ::p/ok status)
+    (assoc-in db db-path result)
+    (assoc db :error {:message "Something goes wrong"})))
+
 (re-frame/reg-event-db
   :initialize-db
   (fn  [_ _]
@@ -26,7 +32,7 @@
 
 (re-frame/reg-event-fx
   :api-request
-  (fn [db [_ body]]
+  (fn [{:keys [db]} [_ body]]
     {:http-xhrio {:method          :post
                   :uri             "/api/"
                   :params          body
@@ -39,18 +45,24 @@
 (re-frame/reg-event-fx
   :select-entity-type
   (fn  [{:keys [db]} [_ type]]
-    {:db (assoc db :opened-entities nil)
+    {:db (deep-merge db {:selected {
+                                    :filled false
+                                    :entities nil
+                                    :type type
+                                    }})
      :http-xhrio  {:method          :post
                    :uri             "/api/"
-                   :params          (p/request [(p/get-entities-command type)])
+                   :params          (p/request [(p/get-entities-command type ::p/resolved-dependencies true)])
                    :timeout         1000
                    :format          (ajax/edn-request-format)
                    :response-format (ajax/edn-response-format)
-                   :on-success      [:show-entities]
+                   :on-success      [:set-selected-entities]
                    :on-failure      [:api-failure]}}))
 
 (re-frame/reg-event-db
-  :show-entities
-  (fn  [db [_ r]]
-    (println db)
-    (assoc db :opened-entities r)))
+  :set-selected-entities
+  (fn  [db [_ response]]
+    (assoc-in
+      (extract-1st-result db [:selected :entities] response)
+      [:selected :filled]
+      true)))

@@ -107,56 +107,57 @@
 (use-fixtures :once fixture)
 
 (deftest api
-  (testing "execution of getting by pk command"
-    (let [{result ::protocol/result}
-          (api/execute-one
-            (protocol/get-by-pk-command :cars 1))]
-      (is (= "Car1" (:name result)))))
-  (testing "execution of upsert command"
-    (let [{result1 ::protocol/result}
-          (api/execute-one
-            (protocol/upsert-command
-              {:name "Car4"
-               :manufacturer 3
-               ::entity/type :cars}))
-          created-car (j/get-by-id common-dao/db :cars result1 :id)
-          {result2 ::protocol/result}
-          (api/execute-one
-            (protocol/upsert-command
-              {:id (:id created-car)
-               :name "Car4 (updated)"
-               :manufacturer 3
-               ::entity/type :cars}))
-          updated-car (j/get-by-id common-dao/db :cars result2 :id)]
-      (is (= result1 result2) "IDs should be identical for created and updated entities")
-      (is (= "Car4" (:name created-car)))
-      (is (= "Car4 (updated)" (:name updated-car)))))
-  (testing "execution of deletion command"
-    (let [pk-value (->
-                     (j/insert!
-                       common-dao/db
-                       :cars
-                       {:name "Cars for deletion" :manufacturer 3})
-                     first
-                     vals
-                     first)
-          {result ::protocol/result}
-          (api/execute-one
-            (protocol/delete-command
-              :cars
-              pk-value))
-          deleted-car (j/get-by-id common-dao/db :cars pk-value :id)]
-      (is (some? pk-value))
-      (is (nil? deleted-car))))
-  (testing "execution of getting entities command"
-    (let [{result ::protocol/result}
-          (api/execute-one
-            (protocol/get-entities-command
-              :cars
-              ::protocol/limit 1
-              ::protocol/offset 0
-              ::protocol/filter [[:manufacturer 1]]
-              ::protocol/order-by [[:id ::protocol/asc]]))
-          ]
-      (is (= 1 (count result)))
-      (is (= "Car1" (-> result first :name))))))
+  (testing "API"
+    (testing "execution of getting by pk command"
+      (let [{result ::protocol/result}
+            (api/execute-one
+              (protocol/get-by-pk-command :cars 1))]
+        (is (= "Car1" (:name result)))))
+    (testing "execution of upsert command"
+      (let [{result1 ::protocol/result}
+            (api/execute-one
+              (protocol/upsert-command
+                {:name "Car4"
+                 :manufacturer 3
+                 ::entity/type :cars}))
+            created-car (j/get-by-id common-dao/db :cars result1 :id)
+            {result2 ::protocol/result}
+            (api/execute-one
+              (protocol/upsert-command
+                {:id (:id created-car)
+                 :name "Car4 (updated)"
+                 :manufacturer 3
+                 ::entity/type :cars}))
+            updated-car (j/get-by-id common-dao/db :cars result2 :id)]
+        (is (= result1 result2) "IDs should be identical for created and updated entities")
+        (is (= "Car4" (:name created-car)))
+        (is (= "Car4 (updated)" (:name updated-car)))))
+    (testing "execution of deletion command"
+      (let [pk-value (->
+                       (j/insert!
+                         common-dao/db
+                         :cars
+                         {:name "Cars for deletion" :manufacturer 3})
+                       first
+                       vals
+                       first)
+            {result ::protocol/result}
+            (api/execute-one
+              (protocol/delete-command
+                :cars
+                pk-value))
+            deleted-car (j/get-by-id common-dao/db :cars pk-value :id)]
+        (is (some? pk-value))
+        (is (nil? deleted-car))))
+    (testing "execution of getting entities command"
+      (let [{result ::protocol/result}
+            (api/execute-one
+              (protocol/get-entities-command
+                :cars
+                ::protocol/limit 1
+                ::protocol/offset 0
+                ::protocol/filter [[:manufacturer 1]]
+                ::protocol/order-by [[:id ::protocol/asc]]))
+            ]
+        (is (= 1 (count result)))
+        (is (= "Car1" (-> result first :name)))))))

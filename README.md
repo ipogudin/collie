@@ -1,5 +1,5 @@
 # collie
-Admin panel to manage entities based on clojure
+Collie is a management panel to control entities in relational databases. It can be embedded into a web application written on clojure.
 
 ## Development environment
 

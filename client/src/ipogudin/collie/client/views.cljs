@@ -1,6 +1,9 @@
 (ns ipogudin.collie.client.views
   (:require [re-frame.core :as re-frame]
-            [ipogudin.collie.protocol :as p]))
+            [ipogudin.collie.protocol :as p]
+            [ipogudin.collie.client.view.entity-renders :refer [render-name
+                                                                render-header
+                                                                render-row]]))
 
 (defn button []
   [:input {:type "button" :value "click" :on-click #(do
@@ -17,20 +20,28 @@
     (fn []
       [:div.row
        (for [n (keys @schema)]
-         [:button.btn.btn-link.col-12
+         [:button.btn.btn-link.col-24
           {:key n
            :type "button"
            :on-click #(re-frame/dispatch [:select-entity-type n])}
           (name n)])])))
 
-(defn show-entities []
-  (let [entities (re-frame/subscribe [:opened-entities])]
+(defn show-selected-entities []
+  (let [selected (re-frame/subscribe [:selected])]
     (fn []
-      [:div (str @entities)])))
+      (if (:filled @selected)
+        (let [{:keys [entities type]} @selected]
+          (into []
+                (concat
+                  [:table]
+                  [[:thead (render-header type)]]
+                  [[:tbody (map
+                            (partial render-row type)
+                            entities)]])))))))
 
 (defn app []
   [:div.row
-   [:div.col-3
+   [:div.col-6
     [list-of-entities]]
-   [:div.col-9
-    [show-entities]]])
+   [:div.col-18
+    [show-selected-entities]]])

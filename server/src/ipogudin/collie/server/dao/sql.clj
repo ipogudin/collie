@@ -8,6 +8,8 @@
             [ipogudin.collie.server.configuration :refer [configuration]])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
+(def ^:private MAX_NUMBER_OF_NESTED_ENTITIES 256)
+
 (defn pool
   [db-conf pool-conf]
   (let [{:keys
@@ -34,18 +36,26 @@
   (let [{:keys [db db-pool]} configuration]
     (pool db db-pool)))
 
+(defn get-by-key
+  "Get an entity by an arbitrary key name and a key value."
+  [db entity-type-kw k-name-kw k-value]
+  (->>
+    (j/get-by-id
+      db
+      entity-type-kw
+      k-value
+      k-name-kw)
+    (dao-common/dress entity-type-kw)))
+
 (defn get-by-pk
+  "Get an entity by a primary key."
   [db schema-map entity-type-kw pk-value]
   (let [pk-name-kw (-> schema-map entity-type-kw schema/find-primary-key ::schema/name)]
-    (->>
-      (j/get-by-id
-        db
-        entity-type-kw
-        pk-value
-        pk-name-kw)
-      (dao-common/dress entity-type-kw))))
+    (get-by-key db entity-type-kw pk-name-kw pk-value)))
 
 (defn upsert
+  "Insert or update an entity. If the entity contains a defined primary key then it will be updated.
+  Otherwise it will be inserted."
   [db schema-map {entity-type-kw ::entity/type :as entity}]
   (let [pk-field (schema/find-primary-key (entity-type-kw schema-map))
         pk-kw (::schema/name pk-field)
@@ -122,31 +132,123 @@
     (mapv second fltr)
     []))
 
+(declare resolve-dependencies)
+
 (defn get-entities
   "opts  :filter [[:column1 10] [:column2 \"string\"]]
          :order-by [[:column1 :asc] [:column2 :desc]]
          :limit 10
-         :offset 0"
+         :offset 0
+         :resolved-dependencies true"
   [db schema-map entity-type-kw & opts]
-  (let [{:keys [fltr order-by limit offset]}
-         (apply hash-map opts)
+  (let [{:keys [filter order-by limit offset resolved-dependencies]}
+        (apply hash-map opts)
+        deps-resolver
+        (fn [entity]
+          (if resolved-dependencies
+            (resolve-dependencies db schema-map entity)
+            entity))
         sql
         (str
           "select * from "
           (db-name entity-type-kw)
-          (filter-stms fltr)
+          (filter-stms filter)
           (order-by-stmt order-by)
           (limit-stmt limit)
           (offset-stmt offset))
         parameters
         (filterv
           some?
-          (into (filter-prmts fltr) [limit offset]))]
+          (into (filter-prmts filter) [limit offset]))
+        root-entities (->>
+                        (j/query
+                          db
+                          (vec (cons sql parameters)))
+                        (mapv
+                          (fn [entity]
+                            (->> entity
+                                 (dao-common/dress entity-type-kw)
+                                 deps-resolver))))]
+    root-entities))
+
+(defmulti get-dep (fn [_ _ _ field] (::schema/field-type field)))
+(defmethod get-dep ::schema/one-to-one
+  [db schema-map entity
+   {field-name ::schema/name
+    related-entity ::schema/related-entity
+    related-entity-field ::schema/related-entity-field
+    :as field}]
+  (if (nil? related-entity-field)
+    (get-by-pk db schema-map related-entity (get entity field-name))
+    (get-by-key db related-entity related-entity-field (get entity field-name))))
+
+(defmethod get-dep ::schema/one-to-many
+  [db schema-map entity-value
+   {related-entity ::schema/related-entity
+    related-entity-field ::schema/related-entity-field
+    :as field}]
+  (get-entities
+    db
+    schema-map
+    related-entity
+    :filter [[related-entity-field
+              (schema/find-primary-key-value
+                (->>
+                  entity-value
+                  ::entity/type
+                  (get schema-map))
+                entity-value)]]
+    :limit MAX_NUMBER_OF_NESTED_ENTITIES
+    :resolved-dependencies false))
+
+(defmethod get-dep ::schema/many-to-many
+  [db schema-map entity-value
+   {related-entity ::schema/related-entity
+    related-entity-field ::schema/related-entity-field
+    relation ::schema/relation
+    left ::schema/left
+    right ::schema/right
+    :as field}]
+  (let [entity-schema (->> entity-value ::entity/type (get schema-map))
+        pk-name-kw (::schema/name (schema/find-primary-key entity-schema))
+        pk-value (schema/find-primary-key-value entity-schema entity-value)
+        entities (j/query
+                   db
+                   [(format
+                      "select r.* from %s as l left join %s as rl on l.%s = rl.%s left join %s as r on rl.%s = r.%s WHERE l.%s = ?"
+                      (db-name (::entity/type entity-value))
+                      (db-name relation)
+                      (db-name pk-name-kw)
+                      (db-name left)
+                      (db-name related-entity)
+                      (db-name right)
+                      (db-name related-entity-field)
+                      (db-name pk-name-kw))
+                    pk-value])]
     (->>
-      (j/query
-        db
-        (vec (cons sql parameters)))
-      vec)))
+      entities
+      (mapv (partial dao-common/dress related-entity)))))
+
+;{::schema/name :showrooms
+; ::schema/field-type ::schema/many-to-many
+; ::schema/related-entity :showrooms
+; ::schema/related-entity-field :id
+; ::schema/relation :showrooms_to_cars
+; ::schema/left :car
+; ::schema/right :showroom}
+
+(defn resolve-dependencies
+  [db schema-map entity]
+  (let [entity-schema (->> entity ::entity/type (get schema-map))
+        relation-fields (filter schema/relation? (::schema/fields entity-schema))
+        deps (->>
+               (mapv
+                 (fn [field]
+                   [(::schema/name field)
+                    (get-dep db schema-map entity field)])
+                 relation-fields)
+               (into {}))]
+    (assoc entity :deps deps)))
 
 (defn setup-dao
   [states]

@@ -4,6 +4,9 @@
 (def schema-description
   [
    {::schema/name :manufacturers
+    ::schema/ui {
+                   ::schema/title "Manufacturers"
+                   }
     ::schema/fields
                   [
                    {::schema/name :id
@@ -18,9 +21,15 @@
                     ::schema/field-type ::schema/serial
                     ::schema/primary-key true}
                    {::schema/name :name
-                    ::schema/field-type ::schema/string}
+                    ::schema/field-type ::schema/string
+                    ::schema/ui {
+                                   ::schema/title "Name"
+                                   }}
                    {::schema/name :manufacturer
-                    ::schema/field-type ::schema/one-to-one}]}
+                    ::schema/field-type ::schema/one-to-one
+                    ::schema/ui {
+                                   ::schema/title "Manufacturers"
+                                   }}]}
    ])
 
 (def schema (schema/schema-seq-to-map schema-description))
