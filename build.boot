@@ -42,6 +42,7 @@
 (def client-env
   {
     :source-paths #{"client/src"}
+    :test-paths #{"client/test"}
     :resource-paths #{"client/resources"}
     :dependencies '[[org.clojure/clojurescript "1.9.946" :scope "provided"]
                     [re-frame "0.10.3-alpha2" :scope "provided" :exclusions [org.clojure/tools.reader]]

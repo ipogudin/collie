@@ -10,11 +10,6 @@
                                                       (re-frame/dispatch [:clear-value])
                                                       (re-frame/dispatch [:api-request (p/request)]))}])
 
-(defn display []
-  (let [value (re-frame/subscribe [:value-to-display])]
-    (fn []
-      [:h1 @value])))
-
 (defn list-of-entities []
   (let [schema (re-frame/subscribe [:schema])]
     (fn []
@@ -27,16 +22,17 @@
           (name n)])])))
 
 (defn show-selected-entities []
-  (let [selected (re-frame/subscribe [:selected])]
+  (let [selected (re-frame/subscribe [:selected])
+        schema (re-frame/subscribe [:schema])]
     (fn []
       (if (:filled @selected)
         (let [{:keys [entities type]} @selected]
           (into []
                 (concat
                   [:table]
-                  [[:thead (render-header type)]]
+                  [[:thead (render-header @schema type)]]
                   [[:tbody (map
-                            (partial render-row type)
+                            (partial render-row @schema type)
                             entities)]])))))))
 
 (defn app []

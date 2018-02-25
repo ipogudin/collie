@@ -14,10 +14,15 @@
 (s/def ::right entity/db-name-spec)
 (s/def ::field-type #{::serial ::int ::decimal ::string ::one-to-one ::one-to-many ::many-to-many})
 (s/def ::primary-key boolean?)
-(s/def ::precision vector?)
+(s/def ::precision int?)
+(s/def ::scale int?)
+(s/def ::show-fn (s/with-gen fn? #(gen/fmap (fn [s] (fn [_] s)) (gen/string-alphanumeric))))
 
 (s/def ::title string?)
-(s/def ::ui (s/keys :req [::title] :opt [::primary-key]))
+(s/def ::hidden boolean?)
+(s/def ::editable boolean?)
+(s/def ::preview-text-length int?)
+(s/def ::ui (s/keys :req [::title] :opt [::primary-key ::show-fn ::hidden ::editable ::preview-text-length]))
 
 (s/def ::common-field (s/keys :req [::name ::field-type] :opt [::primary-key ::ui]))
 
@@ -27,7 +32,7 @@
 (defmethod field-type-mm ::int [_]
   ::common-field)
 (defmethod field-type-mm ::decimal [_]
-  (s/merge ::common-field (s/keys :req [::precision])))
+  (s/merge ::common-field (s/keys :req [::precision ::scale])))
 (defmethod field-type-mm ::string [_]
   ::common-field)
 (defmethod field-type-mm ::one-to-one [_]

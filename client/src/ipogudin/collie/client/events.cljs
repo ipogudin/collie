@@ -25,11 +25,6 @@
   (fn  [db [_ result]]
     (assoc db :value (:value result))))
 
-(re-frame/reg-event-db
-  :clear-value
-  (fn  [db _]
-    (assoc db :value "...")))
-
 (re-frame/reg-event-fx
   :api-request
   (fn [{:keys [db]} [_ body]]

@@ -22,4 +22,4 @@ This section describes boot commands which you can use. It contains only project
 ### Tests
 
 * `boot watch speak set-environment-for-server-tests test` - To run tests for server side code.
-* `boot watch speak set-environment-for-client-tests test-clj` - To run tests for client side code (you must install phantomjs before running client side tests).
+* `boot watch speak set-environment-for-client-tests test-cljs` - To run tests for client side code (you must install phantomjs before running client side tests).
