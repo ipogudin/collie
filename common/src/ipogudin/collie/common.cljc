@@ -37,3 +37,9 @@
                     vector? [ALL p]
                     map? [ALL p]
                     some? STAY)))
+
+(defn generate-uuid
+  []
+  (str
+    #?(:clj (java.util.UUID/randomUUID)
+       :cljs (random-uuid))))

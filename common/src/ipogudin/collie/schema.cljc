@@ -22,7 +22,14 @@
 (s/def ::hidden boolean?)
 (s/def ::editable boolean?)
 (s/def ::preview-text-length int?)
-(s/def ::ui (s/keys :req [::title] :opt [::primary-key ::show-fn ::hidden ::editable ::preview-text-length]))
+(s/def ::selector-size int?)
+(s/def ::ui (s/keys :req [::title]
+                    :opt [::primary-key
+                          ::show-fn
+                          ::hidden
+                          ::editable
+                          ::preview-text-length
+                          ::selector-size]))
 
 (s/def ::common-field (s/keys :req [::name ::field-type] :opt [::primary-key ::ui]))
 
@@ -37,7 +44,7 @@
   ::common-field)
 (defmethod field-type-mm ::one-to-one [_]
   (s/merge ::common-field
-           (s/keys :req [::related-entity] :opt [::related-entity-field])))
+           (s/keys :req [::related-entity ::related-entity-field])))
 (defmethod field-type-mm ::one-to-many [_]
   (s/merge ::common-field
            (s/keys :req [::related-entity ::related-entity-field])))
@@ -84,10 +91,18 @@
         :args (s/cat :entity ::entity)
         :ret (s/or :found ::field :not-found nil?))
 
-(defn find-primary-key-value
-  [entity-schema entity]
-  (let [pk-name (::name (find-primary-key entity-schema))]
-    (get entity pk-name)))
+(defn find-field-schema
+  [entity-schema field-name]
+  (->>
+    entity-schema
+    ::fields
+    (filter #(= field-name (::name %)))
+    first))
+
+(defn get-value-by-field-schema
+  "Returns a value from an entity according to a field schema."
+  [field-schema entity-value]
+  (->> field-schema ::name (get entity-value)))
 
 (defn relation?
   "Checks whether a field is a relation of one of supported types."

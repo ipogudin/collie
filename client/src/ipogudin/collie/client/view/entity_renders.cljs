@@ -1,7 +1,11 @@
 (ns ipogudin.collie.client.view.entity-renders
   (:require [clojure.string :refer [join]]
+            [re-frame.core :as re-frame]
+            [ipogudin.collie.common :refer [deep-merge]]
             [ipogudin.collie.client.common :refer [format]]
-            [ipogudin.collie.schema :as schema]))
+            [ipogudin.collie.client.view.common :refer [raw-html]]
+            [ipogudin.collie.schema :as schema]
+            [ipogudin.collie.entity-helpers :as entity-helpers]))
 
 (defn visible?
   "Returns true if a field schema allows showing this field."
@@ -31,25 +35,36 @@
         (if (< end length) "..." "")))
     value))
 
+(defn render-decimal
+  "Renders a decimal value."
+  [{precision ::precision scale ::scale} value]
+  (format
+    (str
+      "%"
+      (if scale
+        (str "." scale))
+      "f")
+    value))
+
 (defmulti
-  render-field
+  render-field-editor
   (fn [schema field-schema entity-value]
     (::schema/field-type field-schema)))
 
 (defmethod
-  render-field
+  render-field-editor
   ::schema/serial
   [schema field-schema entity-value]
   (->> field-schema ::schema/name (get entity-value)))
 
 (defmethod
-  render-field
+  render-field-editor
   ::schema/int
   [schema field-schema entity-value]
   (->> field-schema ::schema/name (get entity-value)))
 
 (defmethod
-  render-field
+  render-field-editor
   ::schema/decimal
   [schema
    {scale ::schema/scale :as field-schema}
@@ -58,15 +73,10 @@
     field-schema
     ::schema/name
     (get entity-value)
-    (format
-      (str
-        "%"
-        (if scale
-          (str "." scale))
-        "f"))))
+    (render-decimal field-schema)))
 
 (defmethod
-  render-field
+  render-field-editor
   ::schema/string
   [schema field-schema entity-value]
   (->>
@@ -76,7 +86,7 @@
     (render-text field-schema)))
 
 (defmethod
-  render-field
+  render-field-editor
   ::schema/one-to-one
   [schema
    {field-name ::schema/name
@@ -109,13 +119,13 @@
     (render-text field-schema generated-text)))
 
 (defmethod
-  render-field
+  render-field-editor
   ::schema/one-to-many
   [& args]
   (apply render-many args))
 
 (defmethod
-  render-field
+  render-field-editor
   ::schema/many-to-many
   [& args]
   (apply render-many args))
@@ -123,23 +133,38 @@
 (defn render-header
   "Renders a header of a table with field names/titles for entity schema."
   [schema type]
-  (let [entity-schema (get schema type)]
+  (let [entity-schema (get schema type)
+        headers (map
+                  (comp (fn [n] [:th n]) render-name)
+                  (filter
+                    visible?
+                    (::schema/fields entity-schema)))]
     (into
       [:tr]
-      (map
-        (comp (fn [n] [:th n]) render-name)
-        (filter
-          visible?
-          (::schema/fields entity-schema))))))
+      (into headers [[:th] [:th]]))))
 
 (defn render-row
   "Renders a row of a table with field values for a particular entity."
   [schema type entity]
-  (let [entity-schema (get schema type)]
+  (let [entity-schema (get schema type)
+        cells (map
+                (fn [field-schema] [:td (render-field-editor schema field-schema entity)])
+                (filter
+                  visible?
+                  (::schema/fields entity-schema)))]
     (into
-      [:tr {:key (schema/find-primary-key-value entity-schema entity)}]
-      (map
-        (fn [field-schema] [:td (render-field schema field-schema entity)])
-        (filter
-          visible?
-          (::schema/fields entity-schema))))))
+      [:tr {:key (entity-helpers/find-primary-key-value entity-schema entity)}]
+      (into
+        cells
+        [[:td
+          [:button.btn.btn-light
+           (deep-merge
+             {:id "edit-button"
+              :on-click #(re-frame/dispatch [:delete-entity entity])}
+             (raw-html "&times;"))]]
+         [:td
+          [:button.btn.btn-light
+           (deep-merge
+             {:id "edit-button"
+              :on-click #(re-frame/dispatch [:edit-entity entity])}
+             (raw-html "&equiv;"))]]]))))

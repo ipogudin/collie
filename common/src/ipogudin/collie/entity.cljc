@@ -15,3 +15,7 @@
 (s/def ::type db-name-spec)
 
 (s/def ::entity (s/keys :req [::type]))
+
+(defn get-entity-type
+  [entity]
+  (::type entity))

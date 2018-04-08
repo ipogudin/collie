@@ -7,6 +7,11 @@
     (:schema db)))
 
 (re-frame/reg-sub
-  :selected
+  :selecting
   (fn [db]
-    (:selected db)))
+    (:selecting db)))
+
+(re-frame/reg-sub
+  :editing
+  (fn [db]
+    (:editing db)))

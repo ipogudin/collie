@@ -4,6 +4,7 @@
             [mount.core :as mount]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.entity :as entity]
+            [ipogudin.collie.entity-helpers :as entity-helpers]
             [ipogudin.collie.server.dao.common :as dao-common]
             [ipogudin.collie.server.configuration :refer [configuration]])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
@@ -192,7 +193,7 @@
     schema-map
     related-entity
     :filter [[related-entity-field
-              (schema/find-primary-key-value
+              (entity-helpers/find-primary-key-value
                 (->>
                   entity-value
                   ::entity/type
@@ -211,7 +212,7 @@
     :as field}]
   (let [entity-schema (->> entity-value ::entity/type (get schema-map))
         pk-name-kw (::schema/name (schema/find-primary-key entity-schema))
-        pk-value (schema/find-primary-key-value entity-schema entity-value)
+        pk-value (entity-helpers/find-primary-key-value entity-schema entity-value)
         entities (j/query
                    db
                    [(format
@@ -228,14 +229,6 @@
     (->>
       entities
       (mapv (partial dao-common/dress related-entity)))))
-
-;{::schema/name :showrooms
-; ::schema/field-type ::schema/many-to-many
-; ::schema/related-entity :showrooms
-; ::schema/related-entity-field :id
-; ::schema/relation :showrooms_to_cars
-; ::schema/left :car
-; ::schema/right :showroom}
 
 (defn resolve-dependencies
   [db schema-map entity]

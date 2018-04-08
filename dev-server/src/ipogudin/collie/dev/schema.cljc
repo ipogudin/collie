@@ -144,7 +144,10 @@
                     ::schema/related-entity-field :id
                     ::schema/relation :showrooms_to_cars
                     ::schema/left :showroom
-                    ::schema/right :car}]}
+                    ::schema/right :car
+                    ::schema/ui {
+                                 ::schema/selector-size 10
+                                 }}]}
    ])
 
 (def schema (schema/schema-seq-to-map schema-description))

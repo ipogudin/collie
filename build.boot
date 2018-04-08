@@ -111,7 +111,8 @@
                :output-dir "collie.out"
                :asset-path "public/js/collie.out"
                :source-map true
-               :optimizations :none}}])
+               :optimizations :none
+               :verbose true}}])
 
 (def target-path
  "Folder to build cljs and less to."
@@ -209,8 +210,8 @@
            prepare-test-env
            common-env
            client-env)
-         ;(task-options!
-         ;  test-cljs {:cljs-opts {:verbose true}})
+         (task-options!
+           test-cljs {:cljs-opts {:verbose true}})
          identity)
 
 (defn set-environment-for-all-modules
