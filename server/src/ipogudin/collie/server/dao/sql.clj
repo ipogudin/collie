@@ -10,6 +10,9 @@
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
 (def ^:private MAX_NUMBER_OF_NESTED_ENTITIES 256)
+(declare get-dep)
+(declare upsert)
+(declare delete)
 
 (defn pool
   [db-conf pool-conf]
@@ -54,23 +57,110 @@
   (let [pk-name-kw (-> schema-map entity-type-kw schema/find-primary-key ::schema/name)]
     (get-by-key db entity-type-kw pk-name-kw pk-value)))
 
+(defmulti
+  upsert-dep
+  (fn [db schema-map entity-value field-schema field-value]
+    (::schema/field-type field-schema)))
+
+(defmethod
+  upsert-dep
+  ::schema/one-to-one
+  [db schema-map entity-value field-schema field-value]
+  ;nothing to do relation is stored in the main entity
+  )
+
+
+(defmethod
+  upsert-dep
+  ::schema/one-to-many
+  [db schema-map entity-value field-schema field-value]
+  (let [pk-value (entity-helpers/find-primary-key-value
+                   (entity-helpers/find-entity-schema schema-map entity-value)
+                   entity-value)
+        {field-name           ::schema/name
+         related-entity-type  ::schema/related-entity
+         related-entity-field ::schema/related-entity-field} field-schema
+        related-entity-schema (get schema-map related-entity-type)
+        stored-field-value (get-dep db schema-map entity-value field-schema)
+        related-entity-pk-name (::schema/name (schema/find-primary-key related-entity-schema))
+        get-pk-value (partial entity-helpers/find-primary-key-value related-entity-schema)
+        field-pk-values-set (->>
+                              field-value
+                              (map get-pk-value)
+                              (into #{}))
+        stored-related-entity-pk-values-for-deletion (->>
+                                                       stored-field-value
+                                                       (map get-pk-value)
+                                                       (filter (comp not field-pk-values-set)))]
+    ;deletion of existing relations
+    (doseq [pk stored-related-entity-pk-values-for-deletion]
+      (j/update!
+        db
+        related-entity-type
+        {related-entity-field nil}
+        [(str (name related-entity-pk-name) " = ? ") pk]))
+    (doseq [related-entity-value (mapv #(assoc % related-entity-field pk-value) field-value)]
+      (upsert db schema-map related-entity-value))))
+
+(defmethod
+  upsert-dep
+  ::schema/many-to-many
+  [db schema-map entity-value field-schema field-value]
+  (let [pk-value (entity-helpers/find-primary-key-value
+                   (entity-helpers/find-entity-schema schema-map entity-value)
+                   entity-value)
+        {field-name           ::schema/name
+         relation ::schema/relation
+         left ::schema/left
+         right ::schema/right
+         related-entity-type  ::schema/related-entity
+         related-entity-field ::schema/related-entity-field} field-schema
+        related-entity-schema (get schema-map related-entity-type)
+        get-pk-value (partial entity-helpers/find-primary-key-value related-entity-schema)
+        field-pk-values-set (->>
+                              field-value
+                              (map get-pk-value)
+                              (into #{}))]
+    ;deletion of existing relations
+    (j/delete!
+      db
+      relation
+      [(str (name left) " = ? ") pk-value])
+    (doseq [related-entity-pk field-pk-values-set]
+      (j/insert! db relation {left pk-value right related-entity-pk}))))
+
+(defn upsert-deps
+  [db schema-map entity-value deps]
+  (let [entity-schema (entity-helpers/find-entity-schema schema-map entity-value)
+        fields-and-deps (->>
+                     entity-schema
+                     ::schema/fields
+                     (map (fn [{field-name ::schema/name :as field-schema}]
+                               [field-schema (get deps field-name)]))
+                     (filter second))]
+    (doseq [[field-schema field-value] fields-and-deps]
+      (upsert-dep db schema-map entity-value field-schema field-value))))
+
 (defn upsert
   "Insert or update an entity. If the entity contains a defined primary key then it will be updated.
-  Otherwise it will be inserted."
-  [db schema-map {entity-type-kw ::entity/type :as entity}]
+  Otherwise it will be inserted. This implementation respects :deps"
+  [db schema-map {entity-type-kw ::entity/type :as entity-value}]
   (let [pk-field (schema/find-primary-key (entity-type-kw schema-map))
         pk-kw (::schema/name pk-field)
-        pk (get entity pk-kw)
-        stripped-entity (dao-common/strip entity)]
-    (if (nil? pk)
-      (->
-        (j/insert! db entity-type-kw stripped-entity)
-        first
-        vals
-        first)
-      (do
-        (j/update! db entity-type-kw stripped-entity [(str (name pk-kw) " = ? ") pk])
-        pk))))
+        pk (get entity-value pk-kw)
+        deps (:deps entity-value)
+        stripped-entity (dao-common/strip entity-value)
+        pk-value (if (nil? pk)
+                   (->
+                     (j/insert! db entity-type-kw stripped-entity)
+                     first
+                     vals
+                     first)
+                   (do
+                     (j/update! db entity-type-kw stripped-entity [(str (name pk-kw) " = ? ") pk])
+                     pk))]
+    (upsert-deps db schema-map (assoc entity-value pk-kw pk-value) deps)
+    pk-value))
 
 (defn delete
   [db schema-map entity-type-kw pk-value]
@@ -194,10 +284,9 @@
     related-entity
     :filter [[related-entity-field
               (entity-helpers/find-primary-key-value
-                (->>
-                  entity-value
-                  ::entity/type
-                  (get schema-map))
+                (entity-helpers/find-entity-schema
+                  schema-map
+                  entity-value)
                 entity-value)]]
     :limit MAX_NUMBER_OF_NESTED_ENTITIES
     :resolved-dependencies false))

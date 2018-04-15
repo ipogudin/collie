@@ -1,6 +1,7 @@
 (ns ipogudin.collie.client.view.entity-editors
   (:require [clojure.string :refer [join]]
             [re-frame.core :as re-frame]
+            [ipogudin.collie.common :refer [deep-merge]]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.protocol :as protocol]
             [ipogudin.collie.entity :as entity]
@@ -12,6 +13,18 @@
   "Returns true if a field schema allows showing this field."
   [{{hidden ::schema/hidden} ::schema/ui :as field-schema}]
   (not hidden))
+
+(defn value-handler
+  "Returns a function which invokes f with a value of an element with id as an argument."
+  [id f]
+  (fn []
+    (apply f [(-> js/document (.getElementById id) .-value)])))
+
+(defn default-value-parameter
+  [value]
+  (if value
+    {:defaultValue value}
+    {}))
 
 (defmulti
   render-field-editor
@@ -30,7 +43,12 @@
                 (get entity-value)
                 (render-text field-schema))]
     [[:label {:for id} rendered-name]
-     [:input.form-control {:id id :type "text" :readOnly true :value value}]]))
+     [:input.form-control
+      (deep-merge
+        {:id id
+         :type "text"
+         :readOnly true}
+        (default-value-parameter value))]]))
 
 (defmethod
   render-field-editor
@@ -44,7 +62,16 @@
                 (get entity-value)
                 (render-decimal field-schema))]
     [[:label {:for id} rendered-name]
-     [:input.form-control {:id id :type "text" :defaultValue value}]]))
+     [:input.form-control
+      (deep-merge
+        {:id id
+         :type "text"
+         :defaultValue value
+         :on-change (value-handler
+                      id
+                      (fn [v]
+                        (re-frame/dispatch [:change-entity-field field-schema v])))}
+        (default-value-parameter value))]]))
 
 (defmethod
   render-field-editor
@@ -62,7 +89,15 @@
                 (get entity-value)
                 (render-decimal field-schema))]
     [[:label {:for id} rendered-name]
-     [:input.form-control {:id id :type "text" :defaultValue value}]]))
+     [:input.form-control
+      (deep-merge
+        {:id id
+         :type "text"
+         :on-change (value-handler
+                      id
+                      (fn [v]
+                        (re-frame/dispatch [:change-entity-field field-schema v])))}
+        (default-value-parameter value))]]))
 
 (defmethod
   render-field-editor
@@ -76,7 +111,15 @@
                 (get entity-value)
                 (render-text field-schema))]
     [[:label {:for id} rendered-name]
-     [:input.form-control {:id id :type "text" :defaultValue value}]]))
+     [:input.form-control
+      (deep-merge
+        {:id id
+         :type "text"
+         :on-change (value-handler
+                      id
+                      (fn [v]
+                        (re-frame/dispatch [:change-entity-field field-schema v])))}
+        (default-value-parameter value))]]))
 
 (defn add-editable-entity
   "Adds an entity being edited into the storage."
@@ -89,12 +132,6 @@
   (get-in
     @storage
     [:editors editor-id entity-id]))
-
-(defn value-handler
-  "Returns a function which invokes f with a value of an element with id as an argument."
-  [id f]
-  (fn []
-    (apply f [(-> js/document (.getElementById id) .-value)])))
 
 (defn render-option
   [editor-id storage renderer [entity-id entity-value]]
@@ -129,13 +166,14 @@
     [[:label {:for id} rendered-name]
      (into
        [:select.form-control
-        {:id id
-         :default-value default-value
-         :on-change (value-handler
-                      id
-                      (comp
-                        (fn [value] (re-frame/dispatch [:change-entity-field field-schema value]))
-                        (partial get-editable-entity storage id)))}]
+        (deep-merge
+          {:id id
+           :on-change (value-handler
+                        id
+                        (comp
+                          (fn [value] (re-frame/dispatch [:change-entity-field field-schema value]))
+                          (partial get-editable-entity storage id)))}
+          (default-value-parameter default-value))]
        (mapv
          (partial render-option id storage renderer)
          options-with-ids))]))
@@ -176,17 +214,18 @@
     [[:label {:for id} rendered-name]
      (into
        [:select.form-control
-        {:id id
-         :multiple true
-         :default-value default-value
-         :size (or selector-size 5)
-         :on-change (value-handler
-                      id
-                      (fn []
-                        (let [value (mapv
-                                      (partial get-editable-entity storage id)
-                                      (get-selected-options id))]
-                          (re-frame/dispatch [:change-entity-field field-schema value]))))}]
+        (deep-merge
+          {:id id
+           :multiple true
+           :size (or selector-size 5)
+           :on-change (value-handler
+                        id
+                        (fn []
+                          (let [value (mapv
+                                        (partial get-editable-entity storage id)
+                                        (get-selected-options id))]
+                            (re-frame/dispatch [:change-entity-field field-schema value]))))}
+          (default-value-parameter default-value))]
        (mapv
          (partial render-option id storage renderer)
          options-with-ids))]))

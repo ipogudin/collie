@@ -21,9 +21,4 @@
            :entity {}; an entity which is being edited right now
            :command-id-to-dep-field {}; mapping of command id to dependency field name. Those commands request all option values for dependencies.
            }
- :changes {
-           :upsert []
-           :deleted []
-           :status #{:sync :unsync}
-           }
  })

@@ -19,3 +19,7 @@
 (defn get-entity-type
   [entity]
   (::type entity))
+
+(defn create-empty-entity
+  [entity-type]
+  {::type entity-type})

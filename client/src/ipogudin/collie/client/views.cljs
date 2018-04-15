@@ -4,7 +4,8 @@
             [ipogudin.collie.protocol :as p]
             [ipogudin.collie.client.view.entity-renders :refer [render-name
                                                                 render-header
-                                                                render-row]]
+                                                                render-row
+                                                                render-control]]
             [ipogudin.collie.client.view.entity-editors :refer [render-entity-editor]]))
 
 (defn list-of-entities []
@@ -28,9 +29,14 @@
                 (concat
                   [:table]
                   [[:thead (render-header @schema type)]]
-                  [[:tbody (map
-                            (partial render-row @schema type)
-                            entities)]])))))))
+                  [(into
+                     [:tbody]
+                     (concat
+                       [(render-control @schema type)]
+                       (mapv
+                         (partial render-row @schema type)
+                         entities)
+                       ))])))))))
 
 (defn show-entity-editor []
   (let [editing (re-frame/subscribe [:editing])
@@ -45,7 +51,7 @@
                     :handler #(re-frame/dispatch [:save-entity (:entity @editing)])}
                    :cancel
                    {:title "Cancel"
-                    :handler #(re-frame/dispatch [:delete-entity (:entity @editing)])}}
+                    :handler #(re-frame/dispatch [:edit-entity nil])}}
          :handler #(re-frame/dispatch [:edit-entity nil])]))))
 
 (defn app []

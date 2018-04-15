@@ -5,7 +5,9 @@
             [ipogudin.collie.client.common :refer [format]]
             [ipogudin.collie.client.view.common :refer [raw-html]]
             [ipogudin.collie.schema :as schema]
-            [ipogudin.collie.entity-helpers :as entity-helpers]))
+            [ipogudin.collie.protocol :as protocol]
+            [ipogudin.collie.entity-helpers :as entity-helpers]
+            [ipogudin.collie.entity :as entity]))
 
 (defn visible?
   "Returns true if a field schema allows showing this field."
@@ -38,13 +40,14 @@
 (defn render-decimal
   "Renders a decimal value."
   [{precision ::precision scale ::scale} value]
-  (format
-    (str
-      "%"
-      (if scale
-        (str "." scale))
-      "f")
-    value))
+  (if (number? value)
+    (format
+      (str
+        "%"
+        (if scale
+          (str "." scale))
+        "f")
+      value)))
 
 (defmulti
   render-field-editor
@@ -168,3 +171,25 @@
              {:id "edit-button"
               :on-click #(re-frame/dispatch [:edit-entity entity])}
              (raw-html "&equiv;"))]]]))))
+
+(defn render-control
+  [schema type]
+  (let [entity-schema (get schema type)
+        number-of-cells (->>
+                          (::schema/fields entity-schema)
+                          (filter visible?)
+                          count)
+        add-button [:td
+                    [:button.btn.btn-primary
+                      {:type     "button"
+                       :on-click (fn [] (re-frame/dispatch [:edit-entity (entity/create-empty-entity type)]))}
+                      "+"]]
+        empty-cell [:td]]
+    (into
+      []
+      (concat
+        [:tr
+         {:key (protocol/gen-id)}]
+        [add-button
+         empty-cell]
+        (mapv (fn [_] empty-cell) (range number-of-cells))))))

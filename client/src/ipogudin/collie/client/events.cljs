@@ -138,7 +138,9 @@
   (fn  [{:keys [db]} [_ entity-value]]
     (let [s (:schema db)
           t (e/get-entity-type entity-value)
-          pk (entity-helpers/get-entity-id s entity-value)]
+          pk (entity-helpers/find-primary-key-value
+               (entity-helpers/find-entity-schema s entity-value)
+               entity-value)]
       {:db db
        :http-xhrio  {:method          :post
                      :uri             "/api/"

@@ -15,7 +15,7 @@
     [:name "varchar(256)"]
     [:model "varchar(256)"]
     [:description "varchar(2048)"]
-    [:manufacturer "integer NOT NULL REFERENCES manufacturers (id)"]
+    [:manufacturer "integer REFERENCES manufacturers (id)"]
     [:engine_type "varchar(256)"]
     [:price "numeric(10, 2)"]
     [:drive_wheels "integer NOT NULL"]
@@ -31,8 +31,8 @@
    [[:id "serial"]
     [:name "varchar(256)"]]
    :showrooms_to_cars
-   [[:car "integer NOT NULL REFERENCES cars (id)"]
-    [:showroom "integer NOT NULL REFERENCES showrooms (id)"]]
+   [[:car "integer NOT NULL REFERENCES cars (id) ON DELETE CASCADE"]
+    [:showroom "integer NOT NULL REFERENCES showrooms (id) ON DELETE CASCADE"]]
    })
 
 (def entities

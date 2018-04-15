@@ -13,15 +13,16 @@
     (get entity pk-name)))
 
 (defn get-entity-id
-  "Returns entity id based on a schema name and its primary key value."
+  "Returns entity id based on a schema name and its primary key value. It doesn't return entity primary key."
   [schema-map entity-value]
-  (let [s (find-entity-schema schema-map entity-value)]
-  (str
-    (-> s ::schema/name name)
-    "."
-    (find-primary-key-value
-      s
-      entity-value))))
+  (if (map? entity-value)
+    (let [s (find-entity-schema schema-map entity-value)]
+      (str
+        (-> s ::schema/name name)
+        "."
+        (find-primary-key-value
+          s
+          entity-value)))))
 
 (defmulti
   set-field-value
