@@ -50,6 +50,34 @@
          :readOnly true}
         (default-value-parameter value))]]))
 
+(defn checked?
+  "Returns whether checkbox is checked or not."
+  [id]
+  (-> js/document (.getElementById id) .-checked))
+
+(defmethod
+  render-field-editor
+  ::schema/boolean
+  [storage schema field-schema entity-value dep-options]
+  (let [field-name (::schema/name field-schema)
+        id (str (protocol/gen-id) field-name)
+        rendered-name (render-name field-schema)
+        value (->>
+                field-name
+                (get entity-value))]
+    [[:label {:for id} rendered-name]
+     [:input.form-control
+      {:id id
+       :type "checkbox"
+       :checked value
+       :on-change (value-handler
+                    id
+                    (fn [_]
+                      (re-frame/dispatch
+                        [:change-entity-field
+                         field-schema
+                         (checked? id)])))}]]))
+
 (defmethod
   render-field-editor
   ::schema/int
@@ -59,8 +87,7 @@
         rendered-name (render-name field-schema)
         value (->>
                 field-name
-                (get entity-value)
-                (render-decimal field-schema))]
+                (get entity-value))]
     [[:label {:for id} rendered-name]
      [:input.form-control
       (deep-merge

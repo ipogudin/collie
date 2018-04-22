@@ -12,7 +12,7 @@
 (s/def ::relation entity/db-name-spec)
 (s/def ::left entity/db-name-spec)
 (s/def ::right entity/db-name-spec)
-(s/def ::field-type #{::serial ::int ::decimal ::string ::one-to-one ::one-to-many ::many-to-many})
+(s/def ::field-type #{::serial ::boolean ::int ::decimal ::string ::one-to-one ::one-to-many ::many-to-many})
 (s/def ::primary-key boolean?)
 (s/def ::precision int?)
 (s/def ::scale int?)
@@ -35,6 +35,8 @@
 
 (defmulti field-type-mm ::field-type)
 (defmethod field-type-mm ::serial [_]
+  ::common-field)
+(defmethod field-type-mm ::boolean [_]
   ::common-field)
 (defmethod field-type-mm ::int [_]
   ::common-field)

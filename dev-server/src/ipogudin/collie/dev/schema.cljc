@@ -49,6 +49,11 @@
                     ::schema/ui {
                                  ::schema/hidden true
                                  }}
+                   {::schema/name :visible
+                    ::schema/field-type ::schema/boolean
+                    ::schema/ui {
+                                 ::schema/title "Visible"
+                                 }}
                    {::schema/name :name
                     ::schema/field-type ::schema/string
                     ::schema/ui {

@@ -62,6 +62,16 @@
 
 (defmethod
   render-field-editor
+  ::schema/boolean
+  [schema field-schema entity-value]
+  (let [v (->> field-schema ::schema/name (get entity-value))]
+    [:input.form-control
+       {:defaultChecked v
+        :disabled true
+        :type "checkbox"}]))
+
+(defmethod
+  render-field-editor
   ::schema/int
   [schema field-schema entity-value]
   (->> field-schema ::schema/name (get entity-value)))
