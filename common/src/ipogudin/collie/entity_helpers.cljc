@@ -67,3 +67,11 @@
   (let [{field-name ::schema/name
          related-entity-field ::schema/related-entity-field} field-schema]
     (assoc-in entity [:deps field-name] field-value)))
+
+(defn
+  sort-entities-by-pk
+  [schema-map entities]
+  (let [entity-sample (->> entities first)
+        entity-schema (find-entity-schema schema-map entity-sample)
+        pk-field (-> entity-schema schema/find-primary-key ::schema/name)]
+    (sort-by #(get % pk-field) entities)))

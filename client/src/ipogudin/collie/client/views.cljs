@@ -2,6 +2,7 @@
   (:require [re-frame.core :as re-frame]
             [ipogudin.collie.client.view.common :as common-view]
             [ipogudin.collie.protocol :as p]
+            [ipogudin.collie.entity-helpers :refer [sort-entities-by-pk]]
             [ipogudin.collie.client.view.entity-renders :refer [render-name
                                                                 render-header
                                                                 render-row
@@ -24,7 +25,8 @@
         schema (re-frame/subscribe [:schema])]
     (fn []
       (if (= :sync (:status @selecting))
-        (let [{:keys [entities type]} @selecting]
+        (let [{:keys [entities type]} @selecting
+              sorted-entities (sort-entities-by-pk @schema entities)]
           (into []
                 (concat
                   [:table]
@@ -35,7 +37,7 @@
                        [(render-control @schema type)]
                        (mapv
                          (partial render-row @schema type)
-                         entities)
+                         sorted-entities)
                        ))])))))))
 
 (defn show-entity-editor []
