@@ -5,5 +5,5 @@
 (enable-console-print!)
 
 (figwheel/watch-and-reload
-  :websocket-url "ws://localhost:3449/figwheel-ws"
+  :websocket-url "ws://localhost:9449/figwheel-ws"
   :jsload-callback app/init)

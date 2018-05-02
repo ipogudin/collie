@@ -3,7 +3,10 @@
             [ipogudin.collie.server.dao.common :as common-dao]))
 
 (def ddl
-  {:manufacturers
+  {:currency
+   [[:id "serial"]
+    [:name "varchar(256)"]]
+   :manufacturers
    [[:id "serial"]
     [:name "varchar(256)"]]
    :engine_types
@@ -38,6 +41,11 @@
 
 (def entities
   {
+   :currency
+   [
+    {:name "Dollar"}
+    {:name "Euro"}
+    ]
    :manufacturers
    [
     {:name "Factory1"}

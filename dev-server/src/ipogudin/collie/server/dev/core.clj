@@ -1,10 +1,11 @@
 (ns ipogudin.collie.server.dev.core
   (:require [io.pedestal.http :as server]
             [io.pedestal.http.route :as route]
+            [mount.core :as mount]
             [ipogudin.collie.server.dev.service :as service]
             [ipogudin.collie.server.dev.db :refer [setup-db]]
             [ipogudin.collie.dev.schema :refer [schema]]
-            [ipogudin.collie.server.core :refer [init]]))
+            [ipogudin.collie.server.core :refer [init-states]]))
 
 ;; This is an adapted service map, that can be started and stopped
 ;; From the REPL you can call server/start and server/stop on this service
@@ -14,7 +15,10 @@
   "The entry-point for 'lein run-dev'"
   [& args]
   (println "\nCreating your [DEV] server...")
-  (init schema)
+  (->
+    (mount/find-all-states)
+    (init-states schema)
+    mount/start)
   (setup-db)
   (-> service/service ;; start with production configuration
       (merge {:env :dev
@@ -26,7 +30,7 @@
               ;; all origins are allowed in dev mode
               ::server/allowed-origins {:creds true :allowed-origins (constantly true)}})
       ;; Wire up interceptor chains
-      server/default-interceptors
+      service/default-interceptors
       server/dev-interceptors
       server/create-server
       server/start))

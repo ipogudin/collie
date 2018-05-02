@@ -16,9 +16,8 @@
     api/handle
     response))
 
-(defn init [schema]
+(defn init-states [states schema]
   (->
-    (mount/find-all-states)
+    states
     (mount/swap {#'ipogudin.collie.schema/schema schema})
-    sql/setup-dao
-    mount/start))
+    sql/setup-dao))

@@ -3,6 +3,18 @@
 
 (def schema-description
   [
+   {::schema/name :currency
+    ::schema/ui {
+                 ::schema/title "Currency"
+                 ::schema/show-fn :name
+                 }
+    ::schema/fields
+                  [
+                   {::schema/name :id
+                    ::schema/field-type ::schema/serial
+                    ::schema/primary-key true}
+                   {::schema/name :name
+                    ::schema/field-type ::schema/string}]}
    {::schema/name :manufacturers
     ::schema/ui {
                    ::schema/title "Manufacturers"
