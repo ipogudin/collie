@@ -12,11 +12,15 @@
 (s/def ::relation entity/db-name-spec)
 (s/def ::left entity/db-name-spec)
 (s/def ::right entity/db-name-spec)
-(s/def ::field-type #{::serial ::boolean ::int ::decimal ::string ::one-to-one ::one-to-many ::many-to-many})
+(s/def ::field-type #{::serial ::boolean ::int ::decimal ::string ::date ::timestamp
+                      ::one-to-one ::one-to-many ::many-to-many})
 (s/def ::primary-key boolean?)
 (s/def ::precision int?)
 (s/def ::scale int?)
 (s/def ::show-fn (s/with-gen fn? #(gen/fmap (fn [s] (fn [_] s)) (gen/string-alphanumeric))))
+
+(s/def ::ts-format string?)
+(s/def ::tz-disabled boolean?)
 
 (s/def ::title string?)
 (s/def ::hidden boolean?)
@@ -44,6 +48,10 @@
   (s/merge ::common-field (s/keys :req [::precision ::scale])))
 (defmethod field-type-mm ::string [_]
   ::common-field)
+(defmethod field-type-mm ::date [_]
+  (s/merge ::common-field (s/keys :req [::ts-format])))
+(defmethod field-type-mm ::timestamp [_]
+  (s/merge ::common-field (s/keys :req [::ts-format ::tz-disabled])))
 (defmethod field-type-mm ::one-to-one [_]
   (s/merge ::common-field
            (s/keys :req [::related-entity ::related-entity-field])))

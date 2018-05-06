@@ -50,6 +50,58 @@
          :readOnly true}
         (default-value-parameter value))]]))
 
+(defmethod
+  render-field-editor
+  ::schema/date
+  [storage schema field-schema entity-value dep-options]
+  (let [field-name (::schema/name field-schema)
+        id (str (protocol/gen-id) field-name)
+        rendered-name (render-name field-schema)
+        value (->>
+                field-name
+                (get entity-value)
+                (entity-helpers/date-to-string field-schema))]
+    [[:label {:for id} rendered-name]
+     [:input.form-control
+      (deep-merge
+        {:id id
+         :type "text"
+         :defaultValue value
+         :onBlur (value-handler
+                      id
+                      (fn [v]
+                        (re-frame/dispatch
+                          [:change-entity-field
+                           field-schema
+                           (entity-helpers/string-to-date field-schema v)])))}
+        (default-value-parameter value))]]))
+
+(defmethod
+  render-field-editor
+  ::schema/timestamp
+  [storage schema field-schema entity-value dep-options]
+  (let [field-name (::schema/name field-schema)
+        id (str (protocol/gen-id) field-name)
+        rendered-name (render-name field-schema)
+        value (->>
+                field-name
+                (get entity-value)
+                (entity-helpers/timestamp-to-string field-schema))]
+    [[:label {:for id} rendered-name]
+     [:input.form-control
+      (deep-merge
+        {:id id
+         :type "text"
+         :defaultValue value
+         :onBlur (value-handler
+                      id
+                      (fn [v]
+                        (re-frame/dispatch
+                          [:change-entity-field
+                           field-schema
+                           (entity-helpers/string-to-timestamp field-schema v)])))}
+        (default-value-parameter value))]]))
+
 (defn checked?
   "Returns whether checkbox is checked or not."
   [id]
@@ -94,7 +146,7 @@
         {:id id
          :type "text"
          :defaultValue value
-         :on-change (value-handler
+         :onBlur (value-handler
                       id
                       (fn [v]
                         (re-frame/dispatch [:change-entity-field field-schema v])))}
@@ -120,7 +172,7 @@
       (deep-merge
         {:id id
          :type "text"
-         :on-change (value-handler
+         :onBlur (value-handler
                       id
                       (fn [v]
                         (re-frame/dispatch [:change-entity-field field-schema v])))}
@@ -142,7 +194,7 @@
       (deep-merge
         {:id id
          :type "text"
-         :on-change (value-handler
+         :onBlur (value-handler
                       id
                       (fn [v]
                         (re-frame/dispatch [:change-entity-field field-schema v])))}

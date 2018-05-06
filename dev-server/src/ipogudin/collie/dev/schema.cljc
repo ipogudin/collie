@@ -66,6 +66,19 @@
                     ::schema/ui {
                                  ::schema/title "Visible"
                                  }}
+                   {::schema/name :announced
+                    ::schema/field-type ::schema/date
+                    ::schema/ts-format "yyyy-MM-dd"
+                    ::schema/ui {
+                                 ::schema/title "Announced"
+                                 }}
+                   {::schema/name :produced
+                    ::schema/field-type ::schema/timestamp
+                    ::schema/ts-format "yyyy-MM-dd HH:mm:ss"
+                    ::schema/tz-disabled true
+                    ::schema/ui {
+                                 ::schema/title "Released"
+                                 }}
                    {::schema/name :name
                     ::schema/field-type ::schema/string
                     ::schema/ui {

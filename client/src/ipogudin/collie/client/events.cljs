@@ -30,6 +30,11 @@
   (fn  [db [_ result]]
     (assoc db :value (:value result))))
 
+(re-frame/reg-event-db
+  :api-failure
+  (fn  [db [_ result]]
+    (assoc db :error {:message "Something goes wrong"})))
+
 (re-frame/reg-event-fx
   :select-entity
   (fn  [{:keys [db]} [_ type]]

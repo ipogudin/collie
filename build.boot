@@ -56,6 +56,7 @@
                     [re-frame "0.10.5" :scope "provided" :exclusions [org.clojure/tools.reader]]
                     [reagent "0.7.0" :scope "provided" :exclusions [org.clojure/tools.reader]]
                     [day8.re-frame/http-fx "0.1.6" :scope "provided" :exclusions [org.clojure/tools.reader]]
+                    [com.andrewmcveigh/cljs-time "0.5.2"]
                     [org.webjars.bower/bootstrap "4.0.0" :scope "provided"]
                     [org.webjars.bower/jquery "3.3.1" :scope "provided"]
                     [org.webjars.bower/popper.js "1.12.9" :scope "provided"]
@@ -75,6 +76,7 @@
                     [org.clojure/java.jdbc "0.7.3" :scope "provided"]
                     [c3p0/c3p0 "0.9.1.2"]
                     [org.clojure/tools.logging "0.4.0"]
+                    [clj-time "0.14.3"]
                     [com.h2database/h2 "1.4.196" :scope "test"]]})
 
 (def dev-server-env
@@ -158,7 +160,6 @@
                                      :css-dirs [(str "target/" css-distribution-path)]})
         (str "./target/" js-distribution-path)
         js-distribution-path)
-      (repl :server true)
       (watch)
       (sass :output-style :nested)
       (sift :move {#"css/" (str css-distribution-path)})

@@ -1,5 +1,6 @@
 (ns ipogudin.collie.server.dao.sql
-  (:require [clojure.string :as string]
+  (:require [clj-time.coerce :as tc]
+            [clojure.string :as string]
             [clojure.java.jdbc :as j]
             [mount.core :as mount]
             [ipogudin.collie.schema :as schema]
@@ -8,6 +9,30 @@
             [ipogudin.collie.server.dao.common :as dao-common]
             [ipogudin.collie.server.configuration :refer [configuration]])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
+
+; http://clojure.github.io/java.jdbc/#clojure.java.jdbc/IResultSetReadColumn
+(extend-protocol j/IResultSetReadColumn
+  java.sql.Timestamp
+  (result-set-read-column [v _2 _3]
+    (tc/from-sql-time v))
+  java.sql.Date
+  (result-set-read-column [v _2 _3]
+    (tc/to-local-date (tc/from-sql-date v)))
+  java.sql.Time
+  (result-set-read-column [v _2 _3]
+    (org.joda.time.DateTime. v))
+  java.util.Date
+  (result-set-read-column [v _2 _3]
+    (tc/from-date v)))
+
+; http://clojure.github.io/java.jdbc/#clojure.java.jdbc/ISQLValue
+(extend-protocol j/ISQLValue
+  org.joda.time.DateTime
+  (sql-value [v]
+    (tc/to-sql-time v))
+  org.joda.time.LocalDate
+  (sql-value [v]
+    (tc/to-sql-date v)))
 
 (def ^:private MAX_NUMBER_OF_NESTED_ENTITIES 256)
 (declare get-dep)

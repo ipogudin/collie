@@ -1,6 +1,7 @@
 (ns ipogudin.collie.client.view.entity-renders
   (:require [clojure.string :refer [join]]
             [re-frame.core :as re-frame]
+            [cljs-time.format :as f]
             [ipogudin.collie.common :refer [deep-merge]]
             [ipogudin.collie.client.common :refer [format]]
             [ipogudin.collie.client.view.common :refer [raw-html]]
@@ -39,7 +40,7 @@
 
 (defn render-decimal
   "Renders a decimal value."
-  [{precision ::precision scale ::scale} value]
+  [{precision ::schema/precision scale ::schema/scale} value]
   (if (number? value)
     (format
       (str
@@ -59,6 +60,26 @@
   ::schema/serial
   [schema field-schema entity-value]
   (->> field-schema ::schema/name (get entity-value)))
+
+(defmethod
+  render-field-editor
+  ::schema/date
+  [schema field-schema entity-value]
+  (->>
+    field-schema
+    ::schema/name
+    (get entity-value)
+    (entity-helpers/date-to-string field-schema)))
+
+(defmethod
+  render-field-editor
+  ::schema/timestamp
+  [schema field-schema entity-value]
+  (->>
+    field-schema
+    ::schema/name
+    (get entity-value)
+    (entity-helpers/timestamp-to-string field-schema)))
 
 (defmethod
   render-field-editor

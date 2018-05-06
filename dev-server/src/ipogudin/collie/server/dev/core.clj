@@ -5,7 +5,8 @@
             [ipogudin.collie.server.dev.service :as service]
             [ipogudin.collie.server.dev.db :refer [setup-db]]
             [ipogudin.collie.dev.schema :refer [schema]]
-            [ipogudin.collie.server.core :refer [init-states]]))
+            [ipogudin.collie.server.core :refer [init-states]])
+  (:import java.util.TimeZone))
 
 ;; This is an adapted service map, that can be started and stopped
 ;; From the REPL you can call server/start and server/stop on this service
@@ -15,6 +16,7 @@
   "The entry-point for 'lein run-dev'"
   [& args]
   (println "\nCreating your [DEV] server...")
+  (TimeZone/setDefault (TimeZone/getTimeZone "UTC"))
   (->
     (mount/find-all-states)
     (init-states schema)

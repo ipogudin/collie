@@ -1,7 +1,11 @@
 (ns ipogudin.collie.entity-helpers
   "This namespace contains helper functions to work with entities respecting schema api."
   (:require [ipogudin.collie.entity :refer [get-entity-type]]
-            [ipogudin.collie.schema :as schema]))
+            [ipogudin.collie.schema :as schema]
+            #?(:clj [clj-time.format :as f]
+               :cljs [cljs-time.format :as f])
+            #?(:clj [clj-time.core :as c]
+               :cljs [cljs-time.core :as c])))
 
 (defn find-entity-schema
   [schema-map entity-value]
@@ -75,3 +79,41 @@
         entity-schema (find-entity-schema schema-map entity-sample)
         pk-field (-> entity-schema schema/find-primary-key ::schema/name)]
     (sort-by #(get % pk-field) entities)))
+
+; fields encoding
+
+(defn timestamp-to-string
+  "Transform timestamp to string according to format."
+  [{ts-format ::schema/ts-format tz-disabled ::schema/tz-disabled :as field-schema} field-value]
+  (->
+    (f/formatter
+      ts-format
+      (if tz-disabled
+        c/utc
+        (c/default-time-zone)))
+    (f/unparse field-value)))
+
+(defn string-to-timestamp
+  "Transform timestamp to string according to format."
+  [{ts-format ::schema/ts-format tz-disabled ::schema/tz-disabled :as field-schema} string-value]
+  (->
+    (f/formatter
+      ts-format
+      (if tz-disabled
+        c/utc
+        (c/default-time-zone)))
+    (f/parse string-value)))
+
+(defn date-to-string
+  "Transform timestamp to string according to format."
+  [{ts-format ::schema/ts-format :as field-schema} field-value]
+  (->
+    (f/formatter ts-format)
+    (f/unparse-local-date field-value)))
+
+(defn string-to-date
+  "Transform timestamp to string according to format."
+  [{ts-format ::schema/ts-format :as field-schema} string-value]
+  (->
+    (f/formatter ts-format)
+    (f/parse-local-date string-value)))

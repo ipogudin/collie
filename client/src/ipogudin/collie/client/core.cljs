@@ -3,6 +3,7 @@
     [mount.core :as mount]
     [reagent.core :as reagent]
     [re-frame.core :as re-frame]
+    [ipogudin.collie.edn]
     [ipogudin.collie.client.events]
     [ipogudin.collie.client.subs]
     [ipogudin.collie.client.views :as views]
