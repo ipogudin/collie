@@ -1,5 +1,6 @@
 (ns ipogudin.collie.edn
   (:require #?(:clj [clojure.java.io :as io])
+            #?(:clj [clojure.edn :as edn])
             #?(:clj [clj-time.format :as f]
                :cljs [cljs-time.format :as f])
             #?(:cljs [cljs.reader :as reader]))
@@ -57,7 +58,7 @@
          (->> p
               descriptor
               slurp
-              read-string)))))
+              (edn/read-string edn-options))))))
 
 #?(:clj
    (defn write-edn [file-path o]
