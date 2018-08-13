@@ -1,5 +1,7 @@
 (ns ipogudin.collie.common
-  (:require [com.rpl.specter :refer [recursive-path cond-path ALL STAY]]))
+  (:require [com.rpl.specter :refer [recursive-path cond-path ALL STAY]]
+            #?(:cljs [goog.string :as gstring])
+            #?(:cljs [goog.string.format])))
 
 ; utils for working with data structures
 (defn deep-merge
@@ -43,3 +45,8 @@
   (str
     #?(:clj (java.util.UUID/randomUUID)
        :cljs (random-uuid))))
+
+
+(defn format [& args]
+  #?(:clj (apply clojure.core/format args)
+     :cljs (apply gstring/format args)))

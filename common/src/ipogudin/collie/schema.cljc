@@ -22,9 +22,12 @@
 (s/def ::ts-format string?)
 (s/def ::tz-disabled boolean?)
 
+(s/def ::max-length int?)
+
 (s/def ::title string?)
 (s/def ::hidden boolean?)
 (s/def ::editable boolean?)
+(s/def ::nullable boolean?)
 (s/def ::preview-text-length int?)
 (s/def ::selector-size int?)
 (s/def ::ui (s/keys :req [::title]
@@ -35,7 +38,7 @@
                           ::preview-text-length
                           ::selector-size]))
 
-(s/def ::common-field (s/keys :req [::name ::field-type] :opt [::primary-key ::ui]))
+(s/def ::common-field (s/keys :req [::name ::field-type] :opt [::primary-key ::ui ::nullable]))
 
 (defmulti field-type-mm ::field-type)
 (defmethod field-type-mm ::serial [_]
@@ -47,7 +50,7 @@
 (defmethod field-type-mm ::decimal [_]
   (s/merge ::common-field (s/keys :req [::precision ::scale])))
 (defmethod field-type-mm ::string [_]
-  ::common-field)
+  (s/merge ::common-field (s/keys :opt [::max-length])))
 (defmethod field-type-mm ::date [_]
   (s/merge ::common-field (s/keys :req [::ts-format])))
 (defmethod field-type-mm ::timestamp [_]

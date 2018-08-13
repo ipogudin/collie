@@ -2,6 +2,7 @@
   "This namespace contains helper functions to work with entities respecting schema api."
   (:require [ipogudin.collie.entity :refer [get-entity-type]]
             [ipogudin.collie.schema :as schema]
+            [ipogudin.collie.common :as common]
             #?(:clj [clj-time.format :as f]
                :cljs [cljs-time.format :as f])
             #?(:clj [clj-time.core :as c]
@@ -21,12 +22,13 @@
   [schema-map entity-value]
   (if (map? entity-value)
     (let [s (find-entity-schema schema-map entity-value)]
-      (str
-        (-> s ::schema/name name)
-        "."
-        (find-primary-key-value
-          s
-          entity-value)))))
+      (if (some? s)
+        (str
+          (-> s ::schema/name name)
+          "."
+          (find-primary-key-value
+            s
+            entity-value))))))
 
 (defmulti
   set-field-value
@@ -85,13 +87,15 @@
 (defn timestamp-to-string
   "Transform timestamp to string according to format."
   [{ts-format ::schema/ts-format tz-disabled ::schema/tz-disabled :as field-schema} field-value]
-  (->
-    (f/formatter
-      ts-format
-      (if tz-disabled
-        c/utc
-        (c/default-time-zone)))
-    (f/unparse field-value)))
+  (if field-value
+    (->
+      (f/formatter
+        ts-format
+        (if tz-disabled
+          c/utc
+          (c/default-time-zone)))
+      (f/unparse field-value))
+    ""))
 
 (defn string-to-timestamp
   "Transform timestamp to string according to format."
@@ -107,9 +111,11 @@
 (defn date-to-string
   "Transform timestamp to string according to format."
   [{ts-format ::schema/ts-format :as field-schema} field-value]
-  (->
-    (f/formatter ts-format)
-    (f/unparse-local-date field-value)))
+  (if field-value
+    (->
+      (f/formatter ts-format)
+      (f/unparse-local-date field-value))
+    ""))
 
 (defn string-to-date
   "Transform timestamp to string according to format."
@@ -117,3 +123,37 @@
   (->
     (f/formatter ts-format)
     (f/parse-local-date string-value)))
+
+(defn string-to-int
+  [field-schema string-value]
+  #?(:clj (Integer/parseInt string-value)
+     :cljs (js/parseInt string-value)))
+
+(defn int-to-string
+  [field-schema field-value]
+  (str field-value))
+
+(declare decimal-to-string)
+
+(defn string-to-decimal
+  [field-schema string-value]
+  #?(:clj (->> string-value bigdec (decimal-to-string field-schema) bigdec)
+     :cljs (->> string-value js/parseFloat (decimal-to-string field-schema) js/parseFloat)))
+
+(defn decimal-to-string
+  [{precision ::schema/precision scale ::schema/scale :as field-schema} field-value]
+  (if (number? field-value)
+    (common/format
+      (str
+        "%"
+        (if scale
+          (str "." scale))
+        "f")
+      field-value)))
+
+(defn string-to-string
+  [{max-length ::schema/max-length :as field-schema} value]
+  (if (string? value)
+    (if max-length
+      (subs value 0 max-length)
+      value)))

@@ -46,7 +46,7 @@
     (fn []
       (if (= :sync (:status @editing))
         [common-view/modal-dialog
-         [render-entity-editor @schema (:entity @editing) (:dep-options @editing)]
+         [render-entity-editor @schema editing]
          :title "Editor"
          :buttons {:ok
                    {:title "Save"

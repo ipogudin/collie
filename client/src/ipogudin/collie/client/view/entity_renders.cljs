@@ -2,8 +2,7 @@
   (:require [clojure.string :refer [join]]
             [re-frame.core :as re-frame]
             [cljs-time.format :as f]
-            [ipogudin.collie.common :refer [deep-merge]]
-            [ipogudin.collie.client.common :refer [format]]
+            [ipogudin.collie.common :refer [deep-merge format]]
             [ipogudin.collie.client.view.common :refer [raw-html]]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.protocol :as protocol]
@@ -51,18 +50,18 @@
       value)))
 
 (defmulti
-  render-field-editor
+  render-field
   (fn [schema field-schema entity-value]
     (::schema/field-type field-schema)))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/serial
   [schema field-schema entity-value]
   (->> field-schema ::schema/name (get entity-value)))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/date
   [schema field-schema entity-value]
   (->>
@@ -72,7 +71,7 @@
     (entity-helpers/date-to-string field-schema)))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/timestamp
   [schema field-schema entity-value]
   (->>
@@ -82,7 +81,7 @@
     (entity-helpers/timestamp-to-string field-schema)))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/boolean
   [schema field-schema entity-value]
   (let [v (->> field-schema ::schema/name (get entity-value))]
@@ -92,13 +91,13 @@
         :type "checkbox"}]))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/int
   [schema field-schema entity-value]
   (->> field-schema ::schema/name (get entity-value)))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/decimal
   [schema
    {scale ::schema/scale :as field-schema}
@@ -110,7 +109,7 @@
     (render-decimal field-schema)))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/string
   [schema field-schema entity-value]
   (->>
@@ -120,7 +119,7 @@
     (render-text field-schema)))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/one-to-one
   [schema
    {field-name ::schema/name
@@ -153,13 +152,13 @@
     (render-text field-schema generated-text)))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/one-to-many
   [& args]
   (apply render-many args))
 
 (defmethod
-  render-field-editor
+  render-field
   ::schema/many-to-many
   [& args]
   (apply render-many args))
@@ -182,7 +181,7 @@
   [schema type entity]
   (let [entity-schema (get schema type)
         cells (map
-                (fn [field-schema] [:td (render-field-editor schema field-schema entity)])
+                (fn [field-schema] [:td (render-field schema field-schema entity)])
                 (filter
                   visible?
                   (::schema/fields entity-schema)))]

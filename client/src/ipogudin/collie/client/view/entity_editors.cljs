@@ -1,18 +1,14 @@
 (ns ipogudin.collie.client.view.entity-editors
   (:require [clojure.string :refer [join]]
+            [reagent.core :as r]
+            [cljs-time.core :refer [today now]]
             [re-frame.core :as re-frame]
-            [ipogudin.collie.common :refer [deep-merge]]
+            [ipogudin.collie.common :refer [deep-merge format]]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.protocol :as protocol]
             [ipogudin.collie.entity :as entity]
             [ipogudin.collie.entity-helpers :as entity-helpers]
-            [ipogudin.collie.client.common :refer [format]]
-            [ipogudin.collie.client.view.entity-renders :refer [render-name render-text render-decimal]]))
-
-(defn visible?
-  "Returns true if a field schema allows showing this field."
-  [{{hidden ::schema/hidden} ::schema/ui :as field-schema}]
-  (not hidden))
+            [ipogudin.collie.client.view.entity-renders :refer [render-name render-text render-decimal visible?]]))
 
 (defn value-handler
   "Returns a function which invokes f with a value of an element with id as an argument."
@@ -23,182 +19,161 @@
 (defn default-value-parameter
   [value]
   (if value
-    {:defaultValue value}
+    {:default-value value}
     {}))
-
-(defmulti
-  render-field-editor
-  (fn [storage schema field-schema entity-value dep-options]
-    (::schema/field-type field-schema)))
-
-(defmethod
-  render-field-editor
-  ::schema/serial
-  [storage schema field-schema entity-value dep-options]
-  (let [field-name (::schema/name field-schema)
-        id (str (protocol/gen-id) field-name)
-        rendered-name (render-name field-schema)
-        value (->>
-                field-name
-                (get entity-value)
-                (render-text field-schema))]
-    [[:label {:for id} rendered-name]
-     [:input.form-control
-      (deep-merge
-        {:id id
-         :type "text"
-         :readOnly true}
-        (default-value-parameter value))]]))
-
-(defmethod
-  render-field-editor
-  ::schema/date
-  [storage schema field-schema entity-value dep-options]
-  (let [field-name (::schema/name field-schema)
-        id (str (protocol/gen-id) field-name)
-        rendered-name (render-name field-schema)
-        value (->>
-                field-name
-                (get entity-value)
-                (entity-helpers/date-to-string field-schema))]
-    [[:label {:for id} rendered-name]
-     [:input.form-control
-      (deep-merge
-        {:id id
-         :type "text"
-         :defaultValue value
-         :onBlur (value-handler
-                      id
-                      (fn [v]
-                        (re-frame/dispatch
-                          [:change-entity-field
-                           field-schema
-                           (entity-helpers/string-to-date field-schema v)])))}
-        (default-value-parameter value))]]))
-
-(defmethod
-  render-field-editor
-  ::schema/timestamp
-  [storage schema field-schema entity-value dep-options]
-  (let [field-name (::schema/name field-schema)
-        id (str (protocol/gen-id) field-name)
-        rendered-name (render-name field-schema)
-        value (->>
-                field-name
-                (get entity-value)
-                (entity-helpers/timestamp-to-string field-schema))]
-    [[:label {:for id} rendered-name]
-     [:input.form-control
-      (deep-merge
-        {:id id
-         :type "text"
-         :defaultValue value
-         :onBlur (value-handler
-                      id
-                      (fn [v]
-                        (re-frame/dispatch
-                          [:change-entity-field
-                           field-schema
-                           (entity-helpers/string-to-timestamp field-schema v)])))}
-        (default-value-parameter value))]]))
 
 (defn checked?
   "Returns whether checkbox is checked or not."
   [id]
   (-> js/document (.getElementById id) .-checked))
 
+(defmulti
+  render-field-editor
+  (fn [storage schema field-schema editing]
+    (::schema/field-type field-schema)))
+
 (defmethod
   render-field-editor
-  ::schema/boolean
-  [storage schema field-schema entity-value dep-options]
+  ::schema/serial
+  [storage schema field-schema editing]
   (let [field-name (::schema/name field-schema)
         id (str (protocol/gen-id) field-name)
         rendered-name (render-name field-schema)
-        value (->>
-                field-name
-                (get entity-value))]
-    [[:label {:for id} rendered-name]
+        value (get-in @editing [:entity field-name])]
+    (fn [] [:label {:for id} rendered-name]
      [:input.form-control
       {:id id
-       :type "checkbox"
-       :checked value
-       :on-change (value-handler
-                    id
-                    (fn [_]
+       :type "text"
+       :readOnly true
+       :defaultValue value}])))
+
+(defn null-switcher [field-schema value default-value]
+  (let [id (str "null-switcher" (protocol/gen-id))]
+    [:span
+      " "
+      [:input
+        {:id id
+         :type "checkbox"
+         :checked (some? value)
+         :on-change (fn [_]
                       (re-frame/dispatch
                         [:change-entity-field
                          field-schema
-                         (checked? id)])))}]]))
+                         (if (checked? id)
+                           default-value)]))}]]))
+
+(defn create-field-editor
+  [storage schema field-schema editing {:keys [input-type string-to-value value-to-string generate-default-value]}]
+  (let [rendered-name (render-name field-schema)
+        field-name (::schema/name field-schema)
+        id (str (protocol/gen-id) field-name)
+        rendered-value (r/atom nil)
+        editing-value (r/atom nil)
+        field-name (::schema/name field-schema)
+        nullable (::schema/nullable field-schema)]
+    (fn []
+      (let [value (get-in @editing [:entity field-name])
+            disabled (nil? value)]
+        (if @editing-value
+          (reset! rendered-value @editing-value)
+          (reset! rendered-value (value-to-string field-schema value)))
+        [:form-group [:label {:for id} rendered-name]
+         (if nullable
+           [null-switcher field-schema value (generate-default-value)]
+           [:span ""])
+         [:input.form-control
+          {:id id
+           :type "text"
+           :disabled disabled
+           :value @rendered-value
+           :on-change (fn [event] (reset! editing-value (-> event .-target .-value)))
+           :on-blur (value-handler
+                      id
+                      (fn [v]
+                        (reset! editing-value nil)
+                        (re-frame/dispatch
+                          [:change-entity-field
+                           field-schema
+                           (string-to-value field-schema v)])))}]]))))
+
+(defmethod
+  render-field-editor
+  ::schema/date
+  [storage schema field-schema editing]
+  (create-field-editor storage schema field-schema editing
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-date
+                        :value-to-string entity-helpers/date-to-string
+                        :generate-default-value today}))
+
+(defmethod
+  render-field-editor
+  ::schema/timestamp
+  [storage schema field-schema editing]
+  (create-field-editor storage schema field-schema editing
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-timestamp
+                        :value-to-string entity-helpers/timestamp-to-string
+                        :generate-default-value now}))
+
+(defmethod
+  render-field-editor
+  ::schema/boolean
+  [storage schema field-schema editing]
+  (let [field-name (::schema/name field-schema)
+        id (str (protocol/gen-id) field-name)
+        rendered-name (render-name field-schema)
+        field-name (::schema/name field-schema)
+        nullable (::schema/nullable field-schema)]
+    (fn []
+      (let [value (get-in @editing [:entity field-name])
+            disabled (nil? value)]
+        [:form-group [:label {:for id} rendered-name]
+         (if nullable
+           [null-switcher field-schema value true]
+           [:span ""])
+         [:input.form-control
+          {:id id
+           :type "checkbox"
+           :disabled disabled
+           :checked (true? value)
+           :on-change (value-handler
+                        id
+                        (fn [_]
+                          (re-frame/dispatch
+                            [:change-entity-field
+                             field-schema
+                             (checked? id)])))}]]))))
 
 (defmethod
   render-field-editor
   ::schema/int
-  [storage schema field-schema entity-value dep-options]
-  (let [field-name (::schema/name field-schema)
-        id (str (protocol/gen-id) field-name)
-        rendered-name (render-name field-schema)
-        value (->>
-                field-name
-                (get entity-value))]
-    [[:label {:for id} rendered-name]
-     [:input.form-control
-      (deep-merge
-        {:id id
-         :type "text"
-         :defaultValue value
-         :onBlur (value-handler
-                      id
-                      (fn [v]
-                        (re-frame/dispatch [:change-entity-field field-schema v])))}
-        (default-value-parameter value))]]))
+  [storage schema field-schema editing]
+  (create-field-editor storage schema field-schema editing
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-int
+                        :value-to-string entity-helpers/int-to-string
+                        :generate-default-value #(identity 0)}))
 
 (defmethod
   render-field-editor
   ::schema/decimal
-  [storage
-   schema
-   {scale ::schema/scale :as field-schema}
-   entity-value
-   dep-options]
-  (let [field-name (::schema/name field-schema)
-        id (str (protocol/gen-id) field-name)
-        rendered-name (render-name field-schema)
-        value (->>
-                field-name
-                (get entity-value)
-                (render-decimal field-schema))]
-    [[:label {:for id} rendered-name]
-     [:input.form-control
-      (deep-merge
-        {:id id
-         :type "text"
-         :onBlur (value-handler
-                      id
-                      (fn [v]
-                        (re-frame/dispatch [:change-entity-field field-schema v])))}
-        (default-value-parameter value))]]))
+  [storage schema field-schema editing]
+  (create-field-editor storage schema field-schema editing
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-decimal
+                        :value-to-string entity-helpers/decimal-to-string
+                        :generate-default-value #(identity (entity-helpers/string-to-decimal field-schema "0"))}))
 
 (defmethod
   render-field-editor
   ::schema/string
-  [storage schema field-schema entity-value dep-options]
-  (let [field-name (::schema/name field-schema)
-        id (str (protocol/gen-id) field-name)
-        rendered-name (render-name field-schema)
-        value (->>
-                field-name
-                (get entity-value)
-                (render-text field-schema))]
-    [[:label {:for id} rendered-name]
-     [:input.form-control
-      (deep-merge
-        {:id id
-         :type "text"
-         :onBlur (value-handler
-                      id
-                      (fn [v]
-                        (re-frame/dispatch [:change-entity-field field-schema v])))}
-        (default-value-parameter value))]]))
+  [storage schema field-schema editing]
+  (create-field-editor storage schema field-schema editing
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-string
+                        :value-to-string entity-helpers/string-to-string
+                        :generate-default-value #(identity "")}))
 
 (defn add-editable-entity
   "Adds an entity being edited into the storage."
@@ -225,37 +200,47 @@
    {field-name ::schema/name
     related-entity ::schema/related-entity
     :as field-schema}
-   entity-value
-   dep-options]
+   editing]
   (let [field-name (::schema/name field-schema)
         id (str (protocol/gen-id) field-name)
         rendered-name (render-name field-schema)
         {{show-fn ::schema/show-fn} ::schema/ui
          :as related-entity-schema} (get schema related-entity)
-        related-entity-value (-> entity-value :deps (get field-name))
         renderer (fn [e]
                    (if show-fn
                      (show-fn e)
                      (str e)))
-        options-with-ids (mapv
-                           (fn [entity]
-                             [(entity-helpers/get-entity-id schema entity) entity])
-                           (get dep-options field-name))
-        default-value (entity-helpers/get-entity-id schema related-entity-value)]
-    [[:label {:for id} rendered-name]
-     (into
-       [:select.form-control
-        (deep-merge
-          {:id id
-           :on-change (value-handler
-                        id
-                        (comp
-                          (fn [value] (re-frame/dispatch [:change-entity-field field-schema value]))
-                          (partial get-editable-entity storage id)))}
-          (default-value-parameter default-value))]
-       (mapv
-         (partial render-option id storage renderer)
-         options-with-ids))]))
+        nullable (::schema/nullable field-schema)]
+    (fn []
+      (let [related-entity-value (get-in @editing [:entity :deps field-name])
+            value-options (get-in @editing [:dep-options field-name])
+            options-with-ids (mapv
+                               (fn [entity]
+                                 [(entity-helpers/get-entity-id schema entity) entity])
+                               value-options)
+            default-value-id (entity-helpers/get-entity-id schema related-entity-value)
+            default-related-entity-value (->> options-with-ids first second)
+            disabled (nil? related-entity-value)]
+        [:form-group [:label {:for id} rendered-name]
+         (if nullable
+            [null-switcher field-schema related-entity-value default-related-entity-value]
+            [:span ""])
+         (into
+           [:select.form-control
+            (deep-merge
+              {:id id
+               :disabled disabled
+               :on-change (value-handler
+                            id
+                            (comp
+                              (fn [value] (re-frame/dispatch [:change-entity-field field-schema value]))
+                              (partial get-editable-entity storage id)))}
+              (default-value-parameter default-value-id))]
+           (if-not disabled
+             (mapv
+               (partial render-option id storage renderer)
+               options-with-ids)
+             []))]))))
 
 (defn get-selected-options
   [id]
@@ -273,41 +258,42 @@
     related-entity ::schema/related-entity
     {selector-size ::schema/selector-size} ::schema/ui
     :as field-schema}
-   entity-value
-   dep-options]
+   editing]
   (let [field-name (::schema/name field-schema)
         id (str (protocol/gen-id) field-name)
         rendered-name (render-name field-schema)
         {{show-fn ::schema/show-fn} ::schema/ui
          :as related-entity-schema} (get schema related-entity)
-        related-entity-value (-> entity-value :deps (get field-name))
         renderer (fn [e]
                    (if show-fn
                      (show-fn e)
-                     (str e)))
-        options-with-ids (mapv
-                           (fn [entity]
-                             [(entity-helpers/get-entity-id schema entity) entity])
-                           (get dep-options field-name))
-        default-value (map (partial entity-helpers/get-entity-id schema) related-entity-value)]
-    [[:label {:for id} rendered-name]
-     (into
-       [:select.form-control
-        (deep-merge
-          {:id id
-           :multiple true
-           :size (or selector-size 5)
-           :on-change (value-handler
-                        id
-                        (fn []
-                          (let [value (mapv
-                                        (partial get-editable-entity storage id)
-                                        (get-selected-options id))]
-                            (re-frame/dispatch [:change-entity-field field-schema value]))))}
-          (default-value-parameter default-value))]
-       (mapv
-         (partial render-option id storage renderer)
-         options-with-ids))]))
+                     (str e)))]
+    (fn []
+      (let [related-entity-value (get-in @editing [:entity :deps field-name])
+            value-options (get-in @editing [:dep-options field-name])
+            options-with-ids (mapv
+                               (fn [entity]
+                                 [(entity-helpers/get-entity-id schema entity) entity])
+                               value-options)
+            default-value (map (partial entity-helpers/get-entity-id schema) related-entity-value)]
+        [:form-group [:label {:for id} rendered-name]
+         (into
+           [:select.form-control
+            (deep-merge
+              {:id id
+               :multiple true
+               :size (or selector-size 5)
+               :on-change (value-handler
+                            id
+                            (fn []
+                              (let [value (mapv
+                                            (partial get-editable-entity storage id)
+                                            (get-selected-options id))]
+                                (re-frame/dispatch [:change-entity-field field-schema value]))))}
+              (default-value-parameter default-value))]
+           (mapv
+             (partial render-option id storage renderer)
+             options-with-ids))]))))
 
 (defmethod
   render-field-editor
@@ -324,13 +310,14 @@
 
 (defn render-entity-editor
   "Renders am entity editor."
-  [schema entity dep-options]
-  (let [entity-schema (get schema (::entity/type entity))
-        storage (atom {})]
-    (into
-      [:form]
-      (map
-        (fn [field-schema] (into [:form-group] (render-field-editor storage schema field-schema entity dep-options)))
-        (filter
-          visible?
-          (::schema/fields entity-schema))))))
+  [schema editing]
+  (let [storage (atom {})
+        entity-schema (get schema (get-in @editing [:entity ::entity/type]))]
+    (fn []
+      (into
+        [:form]
+        (map
+          (fn [field-schema] [render-field-editor storage schema field-schema editing])
+          (filter
+            visible?
+            (::schema/fields entity-schema)))))))

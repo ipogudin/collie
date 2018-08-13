@@ -1,7 +1,7 @@
 (ns ipogudin.collie.client.view.common
   (:require [re-frame.core :as re-frame]
             [reagent.core :as reagent]
-            [ipogudin.collie.client.common :refer [format]]))
+            [ipogudin.collie.common :refer [format]]))
 
 (defn raw-html
   [html]
