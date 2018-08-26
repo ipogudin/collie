@@ -12,13 +12,14 @@
 (defn list-of-entities []
   (let [schema (re-frame/subscribe [:schema])]
     (fn []
-      [:div.row
-       (for [n (keys @schema)]
-         [:button.btn.btn-link.col-24
-          {:key n
-           :type "button"
-           :on-click #(re-frame/dispatch [:select-entity n])}
-          (name n)])])))
+      (let [sorted-schema (sort-by first @schema)]
+        [:div.row
+         (for [[key entity-schema] sorted-schema]
+           [:button.btn.btn-link.col-24
+            {:key key
+             :type "button"
+             :on-click #(re-frame/dispatch [:select-entity key])}
+            (render-name entity-schema)])]))))
 
 (defn show-selected-entities []
   (let [selecting (re-frame/subscribe [:selecting])

@@ -11,11 +11,6 @@
              :entities nil ; a vector with entities being selected
              :type     type ; a type of entities being selected
              }
- :selecting-field {
-                   :status #{:sync :unsync} ; whether selected entities are received from the server side or not
-                   :entities nil ; a vector with entities being selected
-                   :field-schema {} ;
-                   }
  :editing {
            :status #{:sync :unsync} ; whether dependencies are received from the server side or not
            :entity {}; an entity which is being edited right now

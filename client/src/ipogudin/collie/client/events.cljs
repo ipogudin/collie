@@ -159,9 +159,11 @@
 (re-frame/reg-event-db
   :complete-editing
   (fn  [db [_ response]]
-    (let [{status ::p/status results ::p/results} response]
+    (let [{status ::p/status results ::p/results} response
+          selected-type (get-in db [:selecting :type])]
       (if (= ::p/ok status)
-        (dissoc
-          db
-          :editing)
+        (do
+          (if selected-type
+            (re-frame/dispatch [:select-entity selected-type])) ;TODO inefficient implementation, update should happen on per entity basis
+          (dissoc db :editing))
         (assoc db :error {:message "Something goes wrong"})))))
