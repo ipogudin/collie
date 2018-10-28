@@ -12,8 +12,7 @@
                   [
                    {::schema/name :id
                     ::schema/field-type ::schema/serial
-                    ::schema/primary-key true
-                    ::schema/default ::schema/empty}
+                    ::schema/primary-key true}
                    {::schema/name :name
                     ::schema/field-type ::schema/string
                     ::schema/default ::schema/empty}]}
@@ -60,7 +59,6 @@
                    {::schema/name :id
                     ::schema/field-type ::schema/serial
                     ::schema/primary-key true
-                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/hidden true
                                  }}

@@ -1,6 +1,8 @@
 (ns ipogudin.collie.server.dao.sql-test
   (:require [clojure.test :refer :all]
             [clojure.java.jdbc :as j]
+            [mount.core :as mount]
+            [ipogudin.collie.server.dao.h2-sql-common :as h2-sql-common]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.entity :as entity]
             [ipogudin.collie.server.dao.sql :as sql]))
@@ -144,6 +146,20 @@
    ])
 
 (def schema-map (schema/schema-seq-to-map entities))
+
+(defn fixture
+  [f]
+  (->
+    (mount/only #{#'ipogudin.collie.server.dao.sql-common/insert!
+                  #'ipogudin.collie.server.dao.sql-common/update!
+                  #'ipogudin.collie.server.dao.sql-common/delete!})
+    h2-sql-common/setup-h2
+    mount/start)
+  (try
+    (f)
+    (finally (mount/stop))))
+
+(use-fixtures :once fixture)
 
 (deftest getting-by-pk
   (testing "Getting by primary key"

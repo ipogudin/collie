@@ -7,6 +7,7 @@
             [ipogudin.collie.entity :as entity]
             [ipogudin.collie.entity-helpers :as entity-helpers]
             [ipogudin.collie.server.dao.common :as dao-common]
+            [ipogudin.collie.server.dao.sql-common :as sql-common]
             [ipogudin.collie.server.configuration :refer [configuration]])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource))
 
@@ -147,12 +148,12 @@
                               (map get-pk-value)
                               (into #{}))]
     ;deletion of existing relations
-    (j/delete!
+    (sql-common/delete!
       db
       relation
       [(str (name left) " = ? ") pk-value])
     (doseq [related-entity-pk field-pk-values-set]
-      (j/insert! db relation {left pk-value right related-entity-pk}))))
+      (sql-common/insert! db relation {left pk-value right related-entity-pk}))))
 
 (defn upsert-deps
   [db schema-map entity-value deps]
@@ -176,13 +177,9 @@
         deps (:deps entity-value)
         stripped-entity (dao-common/strip entity-value)
         pk-value (if (nil? pk)
-                   (->
-                     (j/insert! db entity-type-kw stripped-entity)
-                     first
-                     vals
-                     first)
+                   (sql-common/insert! db entity-type-kw stripped-entity pk-kw)
                    (do
-                     (j/update! db entity-type-kw stripped-entity [(str (name pk-kw) " = ? ") pk])
+                     (sql-common/update! db entity-type-kw stripped-entity [(str (name pk-kw) " = ? ") pk])
                      pk))]
     (upsert-deps db schema-map (assoc entity-value pk-kw pk-value) deps)
     pk-value))
@@ -191,7 +188,7 @@
   [db schema-map entity-type-kw pk-value]
   (let [pk-name-kw (-> schema-map entity-type-kw schema/find-primary-key ::schema/name)]
     (->
-      (j/delete! db entity-type-kw [(str (name pk-name-kw) " = ? ") pk-value])
+      (sql-common/delete! db entity-type-kw [(str (name pk-name-kw) " = ? ") pk-value])
       first)))
 
 (defn- db-name

@@ -8,6 +8,7 @@
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.protocol :as protocol]
             [ipogudin.collie.server.dao.sql :as sql-dao]
+            [ipogudin.collie.server.dao.h2-sql-common :as h2-sql-common]
             [ipogudin.collie.server.api :as api]))
 
 (def entities
@@ -94,10 +95,14 @@
                   #'ipogudin.collie.server.dao.common/get-by-pk
                   #'ipogudin.collie.server.dao.common/upsert
                   #'ipogudin.collie.server.dao.common/delete
-                  #'ipogudin.collie.server.dao.common/get-entities})
+                  #'ipogudin.collie.server.dao.common/get-entities
+                  #'ipogudin.collie.server.dao.sql-common/insert!
+                  #'ipogudin.collie.server.dao.sql-common/update!
+                  #'ipogudin.collie.server.dao.sql-common/delete!})
     (mount/swap {#'ipogudin.collie.schema/schema schema-map
                  #'ipogudin.collie.server.configuration/configuration conf})
     sql-dao/setup-dao
+    h2-sql-common/setup-h2
     mount/start)
   (try
     (setup-db common-dao/db)
@@ -111,11 +116,13 @@
     (testing "execution of getting by pk command"
       (let [{result ::protocol/result}
             (api/execute-one
+              common-dao/db
               (protocol/get-by-pk-command :cars 1))]
         (is (= "Car1" (:name result)))))
     (testing "execution of upsert command"
       (let [{result1 ::protocol/result}
             (api/execute-one
+              common-dao/db
               (protocol/upsert-command
                 {:name "Car4"
                  :manufacturer 3
@@ -123,6 +130,7 @@
             created-car (j/get-by-id common-dao/db :cars result1 :id)
             {result2 ::protocol/result}
             (api/execute-one
+              common-dao/db
               (protocol/upsert-command
                 {:id (:id created-car)
                  :name "Car4 (updated)"
@@ -143,6 +151,7 @@
                        first)
             {result ::protocol/result}
             (api/execute-one
+              common-dao/db
               (protocol/delete-command
                 :cars
                 pk-value))
@@ -152,6 +161,7 @@
     (testing "execution of getting entities command"
       (let [{result ::protocol/result}
             (api/execute-one
+              common-dao/db
               (protocol/get-entities-command
                 :cars
                 ::protocol/limit 1
