@@ -327,7 +327,7 @@
         entities (j/query
                    db
                    [(format
-                      "select r.* from %s as l left join %s as rl on l.%s = rl.%s left join %s as r on rl.%s = r.%s WHERE l.%s = ?"
+                      "select r.* from %s as l inner join %s as rl on l.%s = rl.%s inner join %s as r on rl.%s = r.%s WHERE l.%s = ?"
                       (db-name (::entity/type entity-value))
                       (db-name relation)
                       (db-name pk-name-kw)

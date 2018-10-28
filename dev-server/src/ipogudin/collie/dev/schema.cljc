@@ -206,7 +206,8 @@
                     ::schema/field-type ::schema/serial
                     ::schema/primary-key true}
                    {::schema/name :name
-                    ::schema/field-type ::schema/string}
+                    ::schema/field-type ::schema/string
+                    ::schema/default ::schema/empty}
                    {::schema/name :cars
                     ::schema/field-type ::schema/many-to-many
                     ::schema/related-entity :cars
@@ -214,6 +215,7 @@
                     ::schema/relation :showrooms_to_cars
                     ::schema/left :showroom
                     ::schema/right :car
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/selector-size 10
                                  }}]}

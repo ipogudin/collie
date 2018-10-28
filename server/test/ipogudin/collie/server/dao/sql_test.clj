@@ -62,6 +62,7 @@
   (j/insert! t :showrooms {:name "Showroom1"})
   (j/insert! t :showrooms {:name "Showroom2"})
   (j/insert! t :showrooms {:name "Showroom3"})
+  (j/insert! t :showrooms {:name "Showroom4"})
   (j/insert! t :showrooms_to_cars {:car 1 :showroom 1})
   (j/insert! t :showrooms_to_cars {:car 1 :showroom 2})
   (j/insert! t :showrooms_to_cars {:car 2 :showroom 2})
@@ -128,7 +129,14 @@
                     ::schema/field-type ::schema/serial
                     ::schema/primary-key true}
                    {::schema/name :name
-                    ::schema/field-type ::schema/string}]}
+                    ::schema/field-type ::schema/string}
+                   {::schema/name :cars
+                    ::schema/field-type ::schema/many-to-many
+                    ::schema/related-entity :cars
+                    ::schema/related-entity-field :id
+                    ::schema/relation :showrooms_to_cars
+                    ::schema/left :showroom
+                    ::schema/right :car}]}
    {::schema/name :prices
     ::schema/fields
                   [
@@ -304,4 +312,14 @@
         (is (= "Factory1" (:name m1)))
         (is (= 1 (-> deps keys count)))
         (is (= 2 (count cars)))
-        (is (= ["Car1" "Car2"] (mapv :name cars)))))))
+        (is (= ["Car1" "Car2"] (mapv :name cars))))
+      (let [[{{:keys [cars] :as deps} :deps :as c1} & _]
+            (sql/get-entities
+              db
+              schema-map
+              :showrooms
+              :filter [[:name "Showroom4"]]
+              :limit 1
+              :offset 0
+              :resolved-dependencies true)]
+        (is (= 0 (count cars)))))))
