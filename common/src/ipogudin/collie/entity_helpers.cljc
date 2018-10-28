@@ -1,6 +1,6 @@
 (ns ipogudin.collie.entity-helpers
   "This namespace contains helper functions to work with entities respecting schema api."
-  (:require [ipogudin.collie.entity :refer [get-entity-type]]
+  (:require [ipogudin.collie.entity :as entity]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.common :as common]
             #?(:clj [clj-time.format :as f]
@@ -10,7 +10,7 @@
 
 (defn find-entity-schema
   [schema-map entity-value]
-  (get schema-map (get-entity-type entity-value)))
+  (get schema-map (entity/get-entity-type entity-value)))
 
 (defn find-primary-key-value
   [entity-schema entity]
@@ -58,7 +58,7 @@
   set-field-value
   ::schema/one-to-many
   [schema-map field-schema entity field-value]
-  (let [entity-type (get-entity-type entity)
+  (let [entity-type (entity/get-entity-type entity)
         entity-schema (get schema-map entity-type)
         pk-value (find-primary-key-value entity-schema entity)
         {field-name ::schema/name
@@ -157,3 +157,32 @@
     (if max-length
       (subs value 0 max-length)
       value)))
+
+(defn default-value
+  [{field-name ::schema/name field-type ::schema/field-type :as field-schema}]
+  (case (::schema/field-type field-schema)
+    ::schema/serial {field-name nil}
+    ::schema/boolean {field-name true}
+    ::schema/int {field-name 0}
+    ::schema/decimal {field-name 0M}
+    ::schema/string {field-name ""}
+    ::schema/date {field-name (c/today)}
+    ::schema/timestamp {field-name (c/now)}
+    ::schema/one-to-one {:deps {field-name {}}}
+    ::schema/one-to-many {:deps {field-name []}}
+    ::schema/many-to-many {:deps {field-name []}}))
+
+(defn create-empty-entity
+  [entity-type entity-schema]
+  (reduce
+    common/deep-merge
+    {::entity/type entity-type}
+    (->>
+      (mapv
+        (fn [{field-name ::schema/name default ::schema/default :as field-schema}]
+          (if default
+            (if (= ::schema/empty default)
+              (default-value field-schema)
+              {field-name default})))
+        (::schema/fields entity-schema))
+      (filterv some?))))

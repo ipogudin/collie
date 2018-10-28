@@ -28,6 +28,7 @@
 (s/def ::hidden boolean?)
 (s/def ::editable boolean?)
 (s/def ::nullable boolean?)
+(s/def ::default any?)
 (s/def ::preview-text-length int?)
 (s/def ::selector-size int?)
 (s/def ::ui (s/keys :req [::title]
@@ -38,7 +39,7 @@
                           ::preview-text-length
                           ::selector-size]))
 
-(s/def ::common-field (s/keys :req [::name ::field-type] :opt [::primary-key ::ui ::nullable]))
+(s/def ::common-field (s/keys :req [::name ::field-type] :opt [::primary-key ::ui ::nullable ::default]))
 
 (defmulti field-type-mm ::field-type)
 (defmethod field-type-mm ::serial [_]

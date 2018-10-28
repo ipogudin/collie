@@ -221,6 +221,8 @@
             default-value-id (entity-helpers/get-entity-id schema related-entity-value)
             default-related-entity-value (->> options-with-ids first second)
             disabled (nil? related-entity-value)]
+        (if (= {} related-entity-value)
+          (re-frame/dispatch [:change-entity-field field-schema (first value-options)]))
         [:form-group [:label {:for id} rendered-name]
          (if nullable
             [null-switcher field-schema related-entity-value default-related-entity-value]

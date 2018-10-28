@@ -12,9 +12,11 @@
                   [
                    {::schema/name :id
                     ::schema/field-type ::schema/serial
-                    ::schema/primary-key true}
+                    ::schema/primary-key true
+                    ::schema/default ::schema/empty}
                    {::schema/name :name
-                    ::schema/field-type ::schema/string}]}
+                    ::schema/field-type ::schema/string
+                    ::schema/default ::schema/empty}]}
    {::schema/name :manufacturers
     ::schema/ui {
                    ::schema/title "Manufacturers"
@@ -58,12 +60,14 @@
                    {::schema/name :id
                     ::schema/field-type ::schema/serial
                     ::schema/primary-key true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/hidden true
                                  }}
                    {::schema/name :visible
                     ::schema/field-type ::schema/boolean
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Visible"
                                  }}
@@ -71,6 +75,7 @@
                     ::schema/field-type ::schema/date
                     ::schema/ts-format "yyyy-MM-dd"
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Announced"
                                  }}
@@ -79,12 +84,14 @@
                     ::schema/ts-format "yyyy-MM-dd HH:mm:ss"
                     ::schema/tz-disabled true
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Released"
                                  }}
                    {::schema/name :name
                     ::schema/field-type ::schema/string
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/max-length 16
                     ::schema/ui {
                                    ::schema/title "Name"
@@ -92,12 +99,14 @@
                    {::schema/name :model
                     ::schema/field-type ::schema/string
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Model"
                                  }}
                    {::schema/name :description
                     ::schema/field-type ::schema/string
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Description"
                                  ::schema/preview-text-length 20
@@ -107,6 +116,7 @@
                     ::schema/related-entity :engine_types
                     ::schema/related-entity-field :code
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Engine Type"
                                  }}
@@ -115,6 +125,7 @@
                     ::schema/related-entity :manufacturers
                     ::schema/related-entity-field :id
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                    ::schema/title "Manufacturers"
                                    }}
@@ -123,60 +134,70 @@
                     ::schema/scale 2
                     ::schema/field-type ::schema/decimal
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Price"
                                  }}
                    {::schema/name :drive_wheels
                     ::schema/field-type ::schema/int
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Drive Wheels"
                                  }}
                    {::schema/name :width
                     ::schema/field-type ::schema/int
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Width"
                                  }}
                    {::schema/name :length
                     ::schema/field-type ::schema/int
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Length"
                                  }}
                    {::schema/name :height
                     ::schema/field-type ::schema/int
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Height"
                                  }}
                    {::schema/name :transmission_speed
                     ::schema/field-type ::schema/int
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Transmission Speed"
                                  }}
                    {::schema/name :cylinders
                     ::schema/field-type ::schema/int
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Cylinders"
                                  }}
                    {::schema/name :min_kerb_weight
                     ::schema/field-type ::schema/int
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Min Kerb Weight"
                                  }}
                    {::schema/name :max_kerb_weight
                     ::schema/field-type ::schema/int
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Max Kerb Weight"
                                  }}
                    {::schema/name :gross_weight_limit
                     ::schema/field-type ::schema/int
                     ::schema/nullable true
+                    ::schema/default ::schema/empty
                     ::schema/ui {
                                  ::schema/title "Gross Weight Limit"
                                  }}]}

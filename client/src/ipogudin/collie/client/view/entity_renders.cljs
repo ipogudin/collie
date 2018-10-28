@@ -6,8 +6,7 @@
             [ipogudin.collie.client.view.common :refer [raw-html]]
             [ipogudin.collie.schema :as schema]
             [ipogudin.collie.protocol :as protocol]
-            [ipogudin.collie.entity-helpers :as entity-helpers]
-            [ipogudin.collie.entity :as entity]))
+            [ipogudin.collie.entity-helpers :as entity-helpers]))
 
 (defn visible?
   "Returns true if a field schema allows showing this field."
@@ -212,7 +211,7 @@
         add-button [:td
                     [:button.btn.btn-primary
                       {:type     "button"
-                       :on-click (fn [] (re-frame/dispatch [:edit-entity (entity/create-empty-entity type)]))}
+                       :on-click (fn [] (re-frame/dispatch [:edit-entity (entity-helpers/create-empty-entity type entity-schema)]))}
                       "+"]]
         empty-cell [:td]]
     (into
