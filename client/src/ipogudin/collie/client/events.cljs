@@ -10,7 +10,8 @@
             [ipogudin.collie.entity-helpers :as entity-helpers]
             [ipogudin.collie.client.api.entity :as entity-api]
             [ipogudin.collie.entity-helpers :as entity-helpers]
-            [ipogudin.collie.schema :as schema]))
+            [ipogudin.collie.schema :as schema]
+            [ipogudin.collie.client.configuration :as configuration]))
 
 (defn extract-1st-result
   [db db-path {status ::p/status [{result ::p/result}] ::p/results}]
@@ -44,7 +45,7 @@
                                     :type type
                                     }})
      :http-xhrio  {:method          :post
-                   :uri             "/api/"
+                   :uri             (:api-root @configuration/configuration)
                    :params          (p/request [(p/get-entities-command type ::p/resolved-dependencies true)])
                    :timeout         1000
                    :format          (ajax/edn-request-format)
@@ -81,7 +82,7 @@
                  :command-id-to-dep-field command-id-to-dep-field
                  :status :unsync})
          :http-xhrio  {:method          :post
-                       :uri             "/api/"
+                       :uri             (:api-root @configuration/configuration)
                        :params          (p/request commands)
                        :timeout         1000
                        :format          (ajax/edn-request-format)
@@ -130,7 +131,7 @@
   (fn  [{:keys [db]} [_ entity]]
     {:db db
      :http-xhrio  {:method          :post
-                   :uri             "/api/"
+                   :uri             (:api-root @configuration/configuration)
                    :params          (p/request [(p/upsert-command entity)])
                    :timeout         1000
                    :format          (ajax/edn-request-format)
@@ -148,7 +149,7 @@
                entity-value)]
       {:db db
        :http-xhrio  {:method          :post
-                     :uri             "/api/"
+                     :uri             (:api-root @configuration/configuration)
                      :params          (p/request [(p/delete-command t pk)])
                      :timeout         1000
                      :format          (ajax/edn-request-format)
