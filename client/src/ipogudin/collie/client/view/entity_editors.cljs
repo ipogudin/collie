@@ -10,6 +10,13 @@
             [ipogudin.collie.entity-helpers :as entity-helpers]
             [ipogudin.collie.client.view.entity-renders :refer [render-name render-text render-decimal visible?]]))
 
+(defn editable?
+  "Returns true if a field schema allows editing this field."
+  [{{editable ::schema/editable} ::schema/ui :as field-schema}]
+  (if (nil? editable)
+    true
+    editable))
+
 (defn value-handler
   "Returns a function which invokes f with a value of an element with id as an argument."
   [id f]
@@ -321,5 +328,5 @@
         (map
           (fn [field-schema] [render-field-editor storage schema field-schema editing])
           (filter
-            visible?
+            (fn [s] (and (visible? s) (editable? s)))
             (::schema/fields entity-schema)))))))

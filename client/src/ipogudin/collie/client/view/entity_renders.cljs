@@ -191,7 +191,7 @@
         [[:td
           [:button.btn.btn-light
            (deep-merge
-             {:id "edit-button"
+             {:id "delete-button"
               :on-click #(re-frame/dispatch [:delete-entity entity])}
              (raw-html "&times;"))]]
          [:td
