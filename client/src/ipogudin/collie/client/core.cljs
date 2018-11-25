@@ -13,7 +13,7 @@
     [ipogudin.collie.client.configuration :as configuration]))
 
 (defn mount-root []
-  (re-frame/clear-subscription-cache!)
+  ;(re-frame/clear-subscription-cache!)
   (reagent/render [views/app]
                   (.getElementById js/document "collie-app")))
 

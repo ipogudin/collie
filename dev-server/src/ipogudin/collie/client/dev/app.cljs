@@ -3,5 +3,5 @@
                           [ipogudin.collie.schema]
                           [ipogudin.collie.dev.schema :refer [schema]]))
 
-(defn ^:export init[]
-  (core/init schema))
+(defn init![]
+  (core/init schema "/api/"))
