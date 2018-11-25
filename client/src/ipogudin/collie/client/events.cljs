@@ -47,7 +47,7 @@
      :http-xhrio  {:method          :post
                    :uri             (:api-root @configuration/configuration)
                    :params          (p/request [(p/get-entities-command type ::p/resolved-dependencies true)])
-                   :timeout         1000
+                   :timeout         30000
                    :format          (ajax/edn-request-format)
                    :response-format (ajax/edn-response-format)
                    :on-success      [:set-selected-entities]
@@ -84,7 +84,7 @@
          :http-xhrio  {:method          :post
                        :uri             (:api-root @configuration/configuration)
                        :params          (p/request commands)
-                       :timeout         1000
+                       :timeout         30000
                        :format          (ajax/edn-request-format)
                        :response-format (ajax/edn-response-format)
                        :on-success      [:set-dependencies-for-entity]
@@ -133,7 +133,7 @@
      :http-xhrio  {:method          :post
                    :uri             (:api-root @configuration/configuration)
                    :params          (p/request [(p/upsert-command entity)])
-                   :timeout         1000
+                   :timeout         30000
                    :format          (ajax/edn-request-format)
                    :response-format (ajax/edn-response-format)
                    :on-success      [:complete-editing]
@@ -151,7 +151,7 @@
        :http-xhrio  {:method          :post
                      :uri             (:api-root @configuration/configuration)
                      :params          (p/request [(p/delete-command t pk)])
-                     :timeout         1000
+                     :timeout         30000
                      :format          (ajax/edn-request-format)
                      :response-format (ajax/edn-response-format)
                      :on-success      [:complete-editing]
