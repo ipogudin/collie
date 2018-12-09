@@ -36,22 +36,58 @@
   (fn  [db [_ result]]
     (assoc db :error {:message "Something goes wrong"})))
 
+(defn prepare-pagination [db type]
+  (let [current-type (get-in db [:selecting :type])
+        current-pagination (get-in db [:selecting :pagination])
+        default-pagination (:pagination @configuration/configuration)]
+      (deep-merge
+        {:page 1 :limit 10}
+        default-pagination
+        (if (= type current-type) current-pagination {}))))
+
 (re-frame/reg-event-fx
-  :select-entity
+  :select-entities
   (fn  [{:keys [db]} [_ type]]
-    {:db (deep-merge db {:selecting {
-                                    :status :unsync
-                                    :entities nil
-                                    :type type
-                                    }})
-     :http-xhrio  {:method          :post
-                   :uri             (:api-root @configuration/configuration)
-                   :params          (p/request [(p/get-entities-command type ::p/resolved-dependencies true)])
-                   :timeout         30000
-                   :format          (ajax/edn-request-format)
-                   :response-format (ajax/edn-response-format)
-                   :on-success      [:set-selected-entities]
-                   :on-failure      [:api-failure]}}))
+    (let [pagination (prepare-pagination db type)
+          api-root (:api-root @configuration/configuration)]
+      {:db (deep-merge db {:selecting {
+                                      :status :unsync
+                                      :entities nil
+                                      :type type
+                                      :pagination pagination
+                                      }})
+       :http-xhrio  {:method          :post
+                     :uri             api-root
+                     :params          (p/request [(p/get-entities-command
+                                                    type
+                                                    ::p/resolved-dependencies true
+                                                    ::p/offset (* (- (:page pagination) 1) (:limit pagination))
+                                                    ::p/limit (:limit pagination))])
+                     :timeout         30000
+                     :format          (ajax/edn-request-format)
+                     :response-format (ajax/edn-response-format)
+                     :on-success      [:set-selected-entities]
+                     :on-failure      [:api-failure]}})))
+
+(re-frame/reg-event-fx
+  :set-pagination
+  (fn  [{:keys [db]} [_ pagination]]
+    (let [type (get-in db [:selecting :type])]
+      {:db (deep-merge db {:selecting {:pagination pagination}})
+       :dispatch [:select-entities type]})))
+
+(re-frame/reg-event-fx
+  :next-page
+  (fn  [{:keys [db]} [_]]
+    (let [page (get-in db [:selecting :pagination :page])]
+      {:dispatch [:set-pagination {:page (inc page)}]})))
+
+(re-frame/reg-event-fx
+  :previous-page
+  (fn  [{:keys [db]} [_]]
+    (let [page (get-in db [:selecting :pagination :page])
+          previous-page (dec page)]
+      {:dispatch [:set-pagination {:page (if (< previous-page 1) 1 previous-page)}]})))
 
 (re-frame/reg-event-db
   :set-selected-entities
@@ -165,6 +201,6 @@
       (if (= ::p/ok status)
         (do
           (if selected-type
-            (re-frame/dispatch [:select-entity selected-type])) ;TODO inefficient implementation, update should happen on per entity basis
+            (re-frame/dispatch [:select-entities selected-type])) ;TODO inefficient implementation, update should happen on per entity basis
           (dissoc db :editing))
         (assoc db :error {:message "Something goes wrong"})))))

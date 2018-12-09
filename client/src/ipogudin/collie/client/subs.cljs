@@ -12,6 +12,11 @@
     (:selecting db)))
 
 (re-frame/reg-sub
+  :pagination
+  (fn [db]
+    (get-in db [:selecting :pagination])))
+
+(re-frame/reg-sub
   :editing
   (fn [db]
     (:editing db)))

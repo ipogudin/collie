@@ -5,7 +5,7 @@
     (list)
     s))
 
-(def version "0.0.1")
+(def version "0.0.2-SNAPSHOT")
 (def prefix "META-INF/resources")
 (def distribution-path (str prefix "/webjars/collie/" version "/dist/"))
 (def js-distribution-path (str distribution-path "js/"))

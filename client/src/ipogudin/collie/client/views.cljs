@@ -6,7 +6,8 @@
             [ipogudin.collie.client.view.entity-renders :refer [render-name
                                                                 render-header
                                                                 render-row
-                                                                render-control]]
+                                                                render-control
+                                                                render-pagination]]
             [ipogudin.collie.client.view.entity-editors :refer [render-entity-editor]]))
 
 (defn list-of-entities []
@@ -18,28 +19,32 @@
            [:button.btn.btn-link.col-24
             {:key key
              :type "button"
-             :on-click #(re-frame/dispatch [:select-entity key])}
+             :on-click #(re-frame/dispatch [:select-entities key])}
             (render-name entity-schema)])]))))
 
 (defn show-selected-entities []
   (let [selecting (re-frame/subscribe [:selecting])
+        pagination (re-frame/subscribe [:pagination])
         schema (re-frame/subscribe [:schema])]
     (fn []
       (if (= :sync (:status @selecting))
         (let [{:keys [entities type]} @selecting
-              sorted-entities (sort-entities-by-pk @schema entities)]
-          (into []
-                (concat
-                  [:table]
-                  [[:thead (render-header @schema type)]]
-                  [(into
-                     [:tbody]
-                     (concat
-                       [(render-control @schema type)]
-                       (mapv
-                         (partial render-row @schema type)
-                         sorted-entities)
-                       ))])))))))
+              sorted-entities (sort-entities-by-pk @schema entities)
+              entity-table (into []
+                               (concat
+                                 [:table]
+                                 [[:thead (render-header @schema type)]]
+                                 [(into
+                                    [:tbody]
+                                    (concat
+                                      [(render-control @schema type)]
+                                      (mapv
+                                        (partial render-row @schema type)
+                                        sorted-entities)
+                                      ))]))]
+          [:div
+           [:table (render-pagination @schema @pagination)]
+           entity-table])))))
 
 (defn show-entity-editor []
   (let [editing (re-frame/subscribe [:editing])

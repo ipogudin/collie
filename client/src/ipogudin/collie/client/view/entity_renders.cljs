@@ -222,3 +222,43 @@
         [add-button
          empty-cell]
         (mapv (fn [_] empty-cell) (range number-of-cells))))))
+
+(defn render-pagination
+  [schema pagination]
+  (let [entity-schema (get schema type)
+        number-of-cells (->>
+                          (::schema/fields entity-schema)
+                          (filter visible?)
+                          count)
+        limit-input [:td
+                      [:input.form-control
+                       {:type "text"
+                        :size 2
+                        :default-value (:limit pagination)
+                        :on-blur (fn [event] (let [limit (js/parseInt (-> event .-target .-value))]
+                                                 (re-frame/dispatch [:set-pagination {:limit limit}])))
+                        }]]
+        previous-page [:td
+                       [:button.btn.btn-primary
+                        {:type     "button"
+                         :on-click (fn [] (re-frame/dispatch [:previous-page]))}
+                        "<"]]
+        page-input [:td
+                    [:input.form-control
+                     {:type "text"
+                      :size 2
+                      :default-value (:page pagination)
+                      :on-blur (fn [event] (let [page (js/parseInt (-> event .-target .-value))]
+                                             (re-frame/dispatch [:set-pagination {:page page}])))
+                      }]]
+        next-page [:td
+                   [:button.btn.btn-primary
+                    {:type     "button"
+                     :on-click (fn [] (re-frame/dispatch [:next-page]))}
+                    ">"]]]
+    (into
+      []
+      (concat
+        [:tr
+         {:key (protocol/gen-id)}]
+         [limit-input previous-page page-input next-page]))))
