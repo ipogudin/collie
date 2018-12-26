@@ -31,6 +31,7 @@
 (s/def ::default any?)
 (s/def ::preview-text-length int?)
 (s/def ::selector-size int?)
+(s/def ::default-order #{:asc :desc})
 (s/def ::ui (s/keys :req [::title]
                     :opt [::primary-key
                           ::show-fn
@@ -39,7 +40,7 @@
                           ::preview-text-length
                           ::selector-size]))
 
-(s/def ::common-field (s/keys :req [::name ::field-type] :opt [::primary-key ::ui ::nullable ::default]))
+(s/def ::common-field (s/keys :req [::name ::field-type] :opt [::primary-key ::ui ::nullable ::default ::default-order]))
 
 (defmulti field-type-mm ::field-type)
 (defmethod field-type-mm ::serial [_]
@@ -122,6 +123,11 @@
   "Checks whether a field is a relation of one of supported types."
   [{type ::field-type :as field}]
   (some (partial = type) [::one-to-one ::one-to-many ::many-to-many]))
+
+(defn multi-relation?
+  "Checks whether a field is a multi relation."
+  [{type ::field-type :as field}]
+  (some (partial = type) [::one-to-many ::many-to-many]))
 
 ; mount states
 (defstate schema :start #())

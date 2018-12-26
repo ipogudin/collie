@@ -271,7 +271,7 @@
               db
               schema-map
               :manufacturers
-              :order-by [[:name :desc] [:id :asc]]
+              :order-by [[:name :desc]]
               :limit 2)]
         (is (empty? others))
         (is (= ["Factory3" "Factory2"] (mapv :name manufacturers-vec1)))))

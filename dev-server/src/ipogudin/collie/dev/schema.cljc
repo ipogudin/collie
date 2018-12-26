@@ -204,7 +204,10 @@
                   [
                    {::schema/name :id
                     ::schema/field-type ::schema/serial
-                    ::schema/primary-key true}
+                    ::schema/primary-key true
+                    ::schema/ui {
+                                 ::schema/default-order :desc
+                                 }}
                    {::schema/name :name
                     ::schema/field-type ::schema/string
                     ::schema/default ::schema/empty}

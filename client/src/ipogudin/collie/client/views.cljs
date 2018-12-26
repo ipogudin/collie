@@ -25,25 +25,25 @@
 (defn show-selected-entities []
   (let [selecting (re-frame/subscribe [:selecting])
         pagination (re-frame/subscribe [:pagination])
+        ordering (re-frame/subscribe [:ordering])
         schema (re-frame/subscribe [:schema])]
     (fn []
       (if (= :sync (:status @selecting))
         (let [{:keys [entities type]} @selecting
-              sorted-entities (sort-entities-by-pk @schema entities)
               entity-table (into []
                                (concat
                                  [:table]
                                  [[:thead (render-header @schema type)]]
                                  [(into
                                     [:tbody]
-                                    (concat
-                                      [(render-control @schema type)]
+                                    (into
+                                      (render-control @schema type @ordering)
                                       (mapv
                                         (partial render-row @schema type)
-                                        sorted-entities)
+                                        entities)
                                       ))]))]
           [:div
-           [:table (render-pagination @schema @pagination)]
+           [:table [:tbody (render-pagination @pagination)]]
            entity-table])))))
 
 (defn show-entity-editor []

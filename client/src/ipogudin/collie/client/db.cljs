@@ -10,6 +10,8 @@
              :status #{:sync :unsync} ; whether selected entities are received from the server side or not
              :entities nil ; a vector with entities being selected
              :type     type ; a type of entities being selected
+             :pagination {:page 1 :limit 1}
+             :ordering {:field-name :asc}
              }
  :editing {
            :status #{:sync :unsync} ; whether dependencies are received from the server side or not

@@ -17,6 +17,11 @@
     (get-in db [:selecting :pagination])))
 
 (re-frame/reg-sub
+  :ordering
+  (fn [db]
+    (get-in db [:selecting :ordering])))
+
+(re-frame/reg-sub
   :editing
   (fn [db]
     (:editing db)))

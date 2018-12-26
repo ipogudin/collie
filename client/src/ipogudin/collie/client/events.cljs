@@ -45,24 +45,60 @@
         default-pagination
         (if (= type current-type) current-pagination {}))))
 
+(defn prepare-ordering [db type]
+  (let [entity-schema (get-in db [:schema type])
+        current-type (get-in db [:selecting :type])]
+    (if (not= type current-type)
+      (->>
+        (map
+          (fn [{{order ::schema/default-order} ::schema/ui name ::schema/name}]
+            (if (some? order)
+              [name order]))
+          (::schema/fields entity-schema))
+        (filterv some?)
+        (into {}))
+      (get-in db [:selecting :ordering]))))
+
+(defn switch-order [order]
+  (case order
+    :asc :desc
+    :desc nil
+    nil :asc))
+
+(defn process-pagination
+  [pagination]
+  [::p/offset (* (- (:page pagination) 1) (:limit pagination))
+   ::p/limit (:limit pagination)])
+
+(defn process-ordering
+  [ordering]
+  (if (empty? ordering)
+    []
+    [::order-by (filterv second ordering)]))
+
 (re-frame/reg-event-fx
   :select-entities
   (fn  [{:keys [db]} [_ type]]
     (let [pagination (prepare-pagination db type)
+          ordering (prepare-ordering db type)
           api-root (:api-root @configuration/configuration)]
-      {:db (deep-merge db {:selecting {
+      {:db (merge db {:selecting {
                                       :status :unsync
                                       :entities nil
                                       :type type
                                       :pagination pagination
+                                      :ordering ordering
                                       }})
        :http-xhrio  {:method          :post
                      :uri             api-root
-                     :params          (p/request [(p/get-entities-command
-                                                    type
-                                                    ::p/resolved-dependencies true
-                                                    ::p/offset (* (- (:page pagination) 1) (:limit pagination))
-                                                    ::p/limit (:limit pagination))])
+                     :params          (p/request [(apply p/get-entities-command
+                                                     (concat
+                                                       [type
+                                                        ::p/resolved-dependencies true]
+                                                       (process-pagination pagination)
+                                                       (process-ordering ordering)
+                                                       )
+                                                    )])
                      :timeout         30000
                      :format          (ajax/edn-request-format)
                      :response-format (ajax/edn-response-format)
@@ -88,6 +124,14 @@
     (let [page (get-in db [:selecting :pagination :page])
           previous-page (dec page)]
       {:dispatch [:set-pagination {:page (if (< previous-page 1) 1 previous-page)}]})))
+
+(re-frame/reg-event-fx
+  :switch-ordering
+  (fn  [{:keys [db]} [_ field-name]]
+    (let [type (get-in db [:selecting :type])
+          order (get-in db [:selecting :ordering field-name])]
+      {:db (deep-merge db {:selecting {:ordering {field-name (switch-order order)}}})
+       :dispatch [:select-entities type]})))
 
 (re-frame/reg-event-db
   :set-selected-entities

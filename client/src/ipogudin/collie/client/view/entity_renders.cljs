@@ -201,36 +201,49 @@
               :on-click #(re-frame/dispatch [:edit-entity entity])}
              (raw-html "&equiv;"))]]]))))
 
+(def empty-cell [:td])
+
+(defn ordering-button
+  [ordering {name ::schema/name :as field}]
+  (if (schema/multi-relation? field)
+    empty-cell
+    [:td
+     [:button.btn.btn-primary
+      {:on-click (fn [_] (re-frame/dispatch [:switch-ordering name]))}
+      (str (get ordering name))]]))
+
 (defn render-control
-  [schema type]
+  [schema type ordering]
   (let [entity-schema (get schema type)
-        number-of-cells (->>
-                          (::schema/fields entity-schema)
-                          (filter visible?)
-                          count)
+        visible-field-schemas (->>
+                                (::schema/fields entity-schema)
+                                (filter visible?))
+        number-of-cells (count visible-field-schemas)
         add-button [:td
                     [:button.btn.btn-primary
-                      {:type     "button"
+                      {:type "button"
                        :on-click (fn [] (re-frame/dispatch [:edit-entity (entity-helpers/create-empty-entity type entity-schema)]))}
                       "+"]]
-        empty-cell [:td]]
-    (into
-      []
-      (concat
-        [:tr
-         {:key (protocol/gen-id)}]
-        [add-button
-         empty-cell]
-        (mapv (fn [_] empty-cell) (range number-of-cells))))))
+        control-row (concat
+                      [:tr
+                       {:key (protocol/gen-id)}]
+                      [add-button
+                       empty-cell]
+                      (mapv (fn [_] empty-cell) (range number-of-cells)))
+        ordering-row (concat
+                       [:tr
+                        {:key (protocol/gen-id)}]
+                       [empty-cell
+                        empty-cell]
+                       (mapv
+                         (partial ordering-button ordering)
+                         visible-field-schemas))]
+    [(vec control-row)
+     (vec ordering-row)]))
 
 (defn render-pagination
-  [schema pagination]
-  (let [entity-schema (get schema type)
-        number-of-cells (->>
-                          (::schema/fields entity-schema)
-                          (filter visible?)
-                          count)
-        limit-input [:td
+  [pagination]
+  (let [limit-input [:td
                       [:input.form-control
                        {:type "text"
                         :size 2
