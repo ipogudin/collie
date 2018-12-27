@@ -26,6 +26,7 @@
   (let [selecting (re-frame/subscribe [:selecting])
         pagination (re-frame/subscribe [:pagination])
         ordering (re-frame/subscribe [:ordering])
+        filtering (re-frame/subscribe [:filtering])
         schema (re-frame/subscribe [:schema])]
     (fn []
       (if (= :sync (:status @selecting))
@@ -37,7 +38,7 @@
                                  [(into
                                     [:tbody]
                                     (into
-                                      (render-control @schema type @ordering)
+                                      (render-control @schema type @ordering filtering)
                                       (mapv
                                         (partial render-row @schema type)
                                         entities)

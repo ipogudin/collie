@@ -1,7 +1,9 @@
 (ns ipogudin.collie.client.view.entity-renders
   (:require [clojure.string :refer [join]]
             [re-frame.core :as re-frame]
+            [reagent.core :as r]
             [cljs-time.format :as f]
+            [cljs-time.core :refer [today now]]
             [ipogudin.collie.common :refer [deep-merge format]]
             [ipogudin.collie.client.view.common :refer [raw-html]]
             [ipogudin.collie.schema :as schema]
@@ -162,12 +164,174 @@
   [& args]
   (apply render-many args))
 
+(def empty-cell [:td])
+
+;ordering control elements
+(defn ordering-button
+  [ordering {name ::schema/name :as field}]
+  (if (schema/multi-relation? field)
+    empty-cell
+    [:td
+     [:button.btn.btn-primary
+      {:on-click (fn [_] (re-frame/dispatch [:switch-ordering name]))}
+      (case (get ordering name)
+        :asc "↓"
+        :desc "↑"
+        "x")]]))
+;end of ordering control elements
+
+;filtering control elements
+;TODO refactor the following coed and code from the field editor
+
+(defn value-handler
+  "Returns a function which invokes f with a value of an element with id as an argument."
+  [id f]
+  (fn []
+    (apply f [(-> js/document (.getElementById id) .-value)])))
+
+(defn checked?
+  "Returns whether checkbox is checked or not."
+  [id]
+  (-> js/document (.getElementById id) .-checked))
+
+(defn create-field-filter
+  [schema field-schema filtering {:keys [input-type string-to-value value-to-string generate-default-value]}]
+  (let [rendered-name (render-name field-schema)
+        field-name (::schema/name field-schema)
+        id (str (protocol/gen-id) field-name)
+        rendered-value (r/atom nil)
+        editing-value (r/atom nil)
+        field-name (::schema/name field-schema)]
+    (fn []
+      (let [value (get @filtering field-name)]
+        (if @editing-value
+          (reset! rendered-value @editing-value)
+          (reset! rendered-value (value-to-string field-schema value)))
+       [:input.form-control.col-10
+        {:id id
+         :type "text"
+         :value @rendered-value
+         :on-change (fn [event] (reset! editing-value (-> event .-target .-value)))
+         :on-blur (value-handler
+                    id
+                    (fn [v]
+                      (reset! editing-value nil)
+                      (re-frame/dispatch
+                        [:set-filtering
+                         {field-name (string-to-value field-schema v)}])))}]))))
+
+(defmulti
+  render-field-filter
+  (fn [schema field-schema filtering]
+    (::schema/field-type field-schema)))
+
+(defmethod
+  render-field-filter
+  ::schema/serial
+  [schema field-schema filtering]
+  (create-field-filter schema field-schema filtering
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-int
+                        :value-to-string entity-helpers/int-to-string
+                        :generate-default-value #(identity 0)}))
+
+(defmethod
+  render-field-filter
+  ::schema/date
+  [schema field-schema filtering]
+  (create-field-filter schema field-schema filtering
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-date
+                        :value-to-string entity-helpers/date-to-string
+                        :generate-default-value today}))
+
+(defmethod
+  render-field-filter
+  ::schema/timestamp
+  [schema field-schema filtering]
+  (create-field-filter schema field-schema filtering
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-timestamp
+                        :value-to-string entity-helpers/timestamp-to-string
+                        :generate-default-value now}))
+
+(defmethod
+  render-field-filter
+  ::schema/boolean
+  [schema field-schema filtering]
+  (let [field-name (::schema/name field-schema)
+        id (str (protocol/gen-id) field-name)
+        rendered-name (render-name field-schema)
+        field-name (::schema/name field-schema)]
+    (fn []
+      (let [value (get @filtering field-name)]
+       [:input.form-control.col-auto
+        {:id id
+         :type "checkbox"
+         :checked (true? value)
+         :on-change (value-handler
+                      id
+                      (fn [_]
+                        (re-frame/dispatch
+                          [:set-filtering
+                           {field-name (checked? id)}])))}]))))
+
+(defmethod
+  render-field-filter
+  ::schema/int
+  [schema field-schema filtering]
+  (create-field-filter schema field-schema filtering
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-int
+                        :value-to-string entity-helpers/int-to-string
+                        :generate-default-value #(identity 0)}))
+
+(defmethod
+  render-field-filter
+  ::schema/decimal
+  [schema field-schema filtering]
+  (create-field-filter schema field-schema filtering
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-decimal
+                        :value-to-string entity-helpers/decimal-to-string
+                        :generate-default-value #(identity (entity-helpers/string-to-decimal field-schema "0"))}))
+
+(defmethod
+  render-field-filter
+  ::schema/string
+  [schema field-schema filtering]
+  (create-field-filter schema field-schema filtering
+                       {:input-type "text"
+                        :string-to-value entity-helpers/string-to-string
+                        :value-to-string entity-helpers/string-to-string
+                        :generate-default-value #(identity "")}))
+
+(defn render-filter
+  [schema filtering {field-name ::schema/name :as field-schema}]
+  (let [id (str (protocol/gen-id) field-name)
+        rendered-value (r/atom nil)
+        editing-value (r/atom nil)]
+    [(fn []
+      (if (schema/relation? field-schema)
+        empty-cell
+        [:td
+         [:div.input-group
+           [render-field-filter schema field-schema filtering]
+           [:button.btn.btn-primary.form-control.col-4
+            {:on-click (fn [_] (re-frame/dispatch [:disable-filtering field-name]))}
+            "x"]]]))]))
+
+;end filtering control elements
+
 (defn render-header
   "Renders a header of a table with field names/titles for entity schema."
   [schema type]
   (let [entity-schema (get schema type)
         headers (map
-                  (comp (fn [n] [:th n]) render-name)
+                  (fn [{{min-width ::schema/min-width} ::schema/ui :as field-schema}]
+                    [:th (if min-width
+                           {:style {:min-width min-width}}
+                           {}) (render-name field-schema)])
                   (filter
                     visible?
                     (::schema/fields entity-schema)))]
@@ -201,45 +365,35 @@
               :on-click #(re-frame/dispatch [:edit-entity entity])}
              (raw-html "&equiv;"))]]]))))
 
-(def empty-cell [:td])
-
-(defn ordering-button
-  [ordering {name ::schema/name :as field}]
-  (if (schema/multi-relation? field)
-    empty-cell
-    [:td
-     [:button.btn.btn-primary
-      {:on-click (fn [_] (re-frame/dispatch [:switch-ordering name]))}
-      (str (get ordering name))]]))
-
 (defn render-control
-  [schema type ordering]
+  [schema type ordering filtering]
   (let [entity-schema (get schema type)
         visible-field-schemas (->>
                                 (::schema/fields entity-schema)
                                 (filter visible?))
-        number-of-cells (count visible-field-schemas)
         add-button [:td
                     [:button.btn.btn-primary
                       {:type "button"
                        :on-click (fn [] (re-frame/dispatch [:edit-entity (entity-helpers/create-empty-entity type entity-schema)]))}
                       "+"]]
-        control-row (concat
-                      [:tr
-                       {:key (protocol/gen-id)}]
-                      [add-button
-                       empty-cell]
-                      (mapv (fn [_] empty-cell) (range number-of-cells)))
         ordering-row (concat
                        [:tr
                         {:key (protocol/gen-id)}]
-                       [empty-cell
+                       [add-button
                         empty-cell]
                        (mapv
                          (partial ordering-button ordering)
-                         visible-field-schemas))]
-    [(vec control-row)
-     (vec ordering-row)]))
+                         visible-field-schemas))
+        filtering-row (concat
+                        [:tr
+                         {:key (protocol/gen-id)}]
+                        [empty-cell
+                         empty-cell]
+                        (mapv
+                          (partial render-filter schema filtering)
+                          visible-field-schemas))]
+    [(vec ordering-row)
+     (vec filtering-row)]))
 
 (defn render-pagination
   [pagination]

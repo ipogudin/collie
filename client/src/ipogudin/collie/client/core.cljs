@@ -23,14 +23,14 @@
     (mount-root))
   ([schema]
    (init schema nil))
-  ([schema api-root]
+  ([schema conf]
    (->
      (mount/find-all-states)
      (mount/swap {#'ipogudin.collie.schema/schema schema})
      (mount/swap
        {#'ipogudin.collie.client.configuration/configuration
         (if api-root
-          (common/deep-merge configuration/default-configuration {:api-root api-root})
+          (common/deep-merge configuration/default-configuration conf)
           configuration/default-configuration)})
      mount/start)
    (init)))

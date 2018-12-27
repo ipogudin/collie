@@ -19,6 +19,10 @@
        ab
        (apply deep-merge (into [ab c] t))))))
 
+(defn dissoc-in
+  [m ks]
+  (update-in m (vec (drop-last ks)) #(dissoc % (last ks))))
+
 (defn remove-ns-from-keyword
   "Removes namespace from a keyword.
   If it is not a keyword returns an unmodified value."

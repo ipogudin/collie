@@ -12,6 +12,7 @@
              :type     type ; a type of entities being selected
              :pagination {:page 1 :limit 1}
              :ordering {:field-name :asc}
+             :filtering {:field-name "value"}
              }
  :editing {
            :status #{:sync :unsync} ; whether dependencies are received from the server side or not

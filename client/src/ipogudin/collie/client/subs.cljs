@@ -22,6 +22,11 @@
     (get-in db [:selecting :ordering])))
 
 (re-frame/reg-sub
+  :filtering
+  (fn [db]
+    (get-in db [:selecting :filtering])))
+
+(re-frame/reg-sub
   :editing
   (fn [db]
     (:editing db)))

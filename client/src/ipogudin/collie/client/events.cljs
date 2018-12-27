@@ -3,7 +3,7 @@
             [ipogudin.collie.client.db :as db]
             [day8.re-frame.http-fx]
             [ajax.edn :as ajax]
-            [ipogudin.collie.common :refer [deep-merge]]
+            [ipogudin.collie.common :refer [deep-merge dissoc-in]]
             [ipogudin.collie.schema :refer [schema]]
             [ipogudin.collie.protocol :as p]
             [ipogudin.collie.entity :as e]
@@ -59,6 +59,13 @@
         (into {}))
       (get-in db [:selecting :ordering]))))
 
+(defn prepare-filtering [db type]
+  (let [entity-schema (get-in db [:schema type])
+        current-type (get-in db [:selecting :type])]
+    (if (not= type current-type)
+      {}
+      (get-in db [:selecting :filtering]))))
+
 (defn switch-order [order]
   (case order
     :asc :desc
@@ -76,11 +83,18 @@
     []
     [::order-by (filterv second ordering)]))
 
+(defn process-filtering
+  [filtering]
+  (if (empty? filtering)
+    []
+    [::filter (vec filtering)]))
+
 (re-frame/reg-event-fx
   :select-entities
   (fn  [{:keys [db]} [_ type]]
     (let [pagination (prepare-pagination db type)
           ordering (prepare-ordering db type)
+          filtering (prepare-filtering db type)
           api-root (:api-root @configuration/configuration)]
       {:db (merge db {:selecting {
                                       :status :unsync
@@ -88,6 +102,7 @@
                                       :type type
                                       :pagination pagination
                                       :ordering ordering
+                                      :filtering filtering
                                       }})
        :http-xhrio  {:method          :post
                      :uri             api-root
@@ -97,7 +112,7 @@
                                                         ::p/resolved-dependencies true]
                                                        (process-pagination pagination)
                                                        (process-ordering ordering)
-                                                       )
+                                                       (process-filtering filtering))
                                                     )])
                      :timeout         30000
                      :format          (ajax/edn-request-format)
@@ -110,6 +125,20 @@
   (fn  [{:keys [db]} [_ pagination]]
     (let [type (get-in db [:selecting :type])]
       {:db (deep-merge db {:selecting {:pagination pagination}})
+       :dispatch [:select-entities type]})))
+
+(re-frame/reg-event-fx
+  :set-filtering
+  (fn  [{:keys [db]} [_ filtering]]
+    (let [type (get-in db [:selecting :type])]
+      {:db (deep-merge db {:selecting {:filtering filtering}})
+       :dispatch [:select-entities type]})))
+
+(re-frame/reg-event-fx
+  :disable-filtering
+  (fn  [{:keys [db]} [_ field-name]]
+    (let [type (get-in db [:selecting :type])]
+      {:db (dissoc-in db [:selecting :filtering field-name])
        :dispatch [:select-entities type]})))
 
 (re-frame/reg-event-fx

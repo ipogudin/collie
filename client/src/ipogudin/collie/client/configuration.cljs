@@ -4,7 +4,7 @@
 (def default-configuration
   {:api-root "/api/"
    :pagination {
-                :limit 50
+                :limit 25
                 }})
 
 (defstate configuration :start default-configuration)

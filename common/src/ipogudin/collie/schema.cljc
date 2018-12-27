@@ -32,13 +32,15 @@
 (s/def ::preview-text-length int?)
 (s/def ::selector-size int?)
 (s/def ::default-order #{:asc :desc})
+(s/def ::min-width int?)
 (s/def ::ui (s/keys :req [::title]
                     :opt [::primary-key
                           ::show-fn
                           ::hidden
                           ::editable
                           ::preview-text-length
-                          ::selector-size]))
+                          ::selector-size
+                          ::min-width]))
 
 (s/def ::common-field (s/keys :req [::name ::field-type] :opt [::primary-key ::ui ::nullable ::default ::default-order]))
 

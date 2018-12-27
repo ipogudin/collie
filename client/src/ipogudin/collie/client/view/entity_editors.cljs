@@ -316,7 +316,6 @@
   [& args]
   (apply render-many args))
 
-
 (defn render-entity-editor
   "Renders am entity editor."
   [schema editing]

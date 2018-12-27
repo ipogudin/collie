@@ -4,4 +4,4 @@
                           [ipogudin.collie.dev.schema :refer [schema]]))
 
 (defn init![]
-  (core/init schema "/api/"))
+  (core/init schema {:api-root "/api/"}))
