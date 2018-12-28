@@ -29,7 +29,7 @@
      (mount/swap {#'ipogudin.collie.schema/schema schema})
      (mount/swap
        {#'ipogudin.collie.client.configuration/configuration
-        (if api-root
+        (if conf
           (common/deep-merge configuration/default-configuration conf)
           configuration/default-configuration)})
      mount/start)
