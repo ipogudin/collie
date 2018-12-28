@@ -180,7 +180,7 @@
     (->>
       (mapv
         (fn [{field-name ::schema/name default ::schema/default :as field-schema}]
-          (if default
+          (if (some? default)
             (if (= ::schema/empty default)
               (default-value field-schema)
               {field-name default})))
